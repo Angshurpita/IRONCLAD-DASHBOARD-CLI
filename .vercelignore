@@ -1,0 +1,20 @@
+# Vercel deployment ignore list
+.venv
+venv
+ENV
+env
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.ruff_cache
+tests
+.DS_Store
+*.egg-info
+dist
+build
+.ironclad/vectors
+

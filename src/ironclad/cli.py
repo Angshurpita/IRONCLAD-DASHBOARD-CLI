@@ -522,5 +522,357 @@ def config(
     )
 
 
+# ============================================================================
+# Personalized Learning CLI Sub-Commands
+# ============================================================================
+
+from ironclad.learning.engine import PersonalizedLearningEngine
+from ironclad.learning.graph import ConceptGraph, get_available_curricula
+from ironclad.learning.models import LearningModality, LearningPace, StruggleType
+from ironclad.learning.storage import LearningStorage
+from ironclad.learning.teacher import TeacherDashboardService
+from ironclad.learning.web import _seed_demo_classroom, run_dashboard_server
+
+learn_app = typer.Typer(name="learn", help="Personalized adaptive learning & Socratic sessions.")
+student_app = typer.Typer(name="student", help="Manage dynamic student profiles and mastery vectors.")
+teacher_app = typer.Typer(name="teacher", help="Teacher analytics, explainable interventions, and web dashboard.")
+
+app.add_typer(learn_app, name="learn")
+app.add_typer(student_app, name="student")
+app.add_typer(teacher_app, name="teacher")
+
+
+def _get_learning_context(path: Optional[Path] = None, domain: str = "python_programming"):
+    settings = get_settings(path)
+    learning_db = settings.ironclad_path / "learning.db"
+    storage = LearningStorage(learning_db)
+
+    # Seed demo students if brand new
+    if not storage.list_students():
+        _seed_demo_classroom(storage)
+
+    raw_curricula = get_available_curricula()
+    curr = raw_curricula.get(domain, raw_curricula.get("python_programming"))
+    graph = ConceptGraph(curr)
+    return settings, storage, graph
+
+
+@learn_app.command("session")
+def learn_session(
+    student_id: str = typer.Option("s_alex", "--student", "-s", help="Student ID."),
+    concept_id: Optional[str] = typer.Option(None, "--concept", "-c", help="Concept ID."),
+    domain: str = typer.Option("python_programming", "--domain", "-d", help="Curriculum domain."),
+    modality: Optional[str] = typer.Option(None, "--modality", "-m", help="Preferred modality (worked_examples, visual, simulation, real_world, practice_questions)."),
+    answer: Optional[str] = typer.Option(None, "--answer", "-a", help="Pre-fill assessment answer (or runs interactively)."),
+    json_output: bool = typer.Option(False, "--json", help="Output machine-readable JSON."),
+):
+    """Run an adaptive Socratic learning session with grounded lesson generation."""
+    from ironclad.learning.engine import PersonalizedLearningEngine
+    from ironclad.learning.models import LearningModality
+
+    settings, storage, graph = _get_learning_context(domain=domain)
+    engine = PersonalizedLearningEngine(settings, storage, graph)
+
+    student = storage.get_or_create_student(student_id, name=student_id, domain=domain)
+    target_cid = concept_id or list(graph.concepts.keys())[0]
+
+    chosen_mod = None
+    if modality:
+        try:
+            chosen_mod = LearningModality(modality)
+        except ValueError:
+            console.print(f"[yellow]Unknown modality '{modality}'; defaulting to learner preference.[/yellow]")
+
+    lesson = engine.create_lesson_plan(student_id, target_cid, requested_modality=chosen_mod)
+
+    if json_output:
+        output_json(lesson.model_dump())
+        return
+
+    console.print(Panel(
+        f"[bold cyan]{lesson.concept_name}[/bold cyan]  [dim]• Modality: {lesson.modality.value.upper()}[/dim]\n"
+        f"Learner: [bold green]{student.name}[/bold green] (Pace: {student.learning_pace.value})\n"
+        f"{lesson.socratic_scaffolding or ''}",
+        title="🎓 IRONCLAD Socratic Lesson",
+        border_style="cyan"
+    ))
+
+    console.print(f"\n[bold]{lesson.explanation}[/bold]")
+    console.print(f"\n{lesson.worked_example}")
+    console.print(f"\n[bold yellow]Guided Practice:[/bold yellow] {lesson.guided_exercise}")
+
+    if lesson.citations:
+        console.print(f"\n[dim green]Grounded References: {', '.join(lesson.citations[:2])}[/dim green]")
+
+    if lesson.assessment_items:
+        q = lesson.assessment_items[0]
+        console.print(Panel(
+            f"[bold]{q.question}[/bold]\n"
+            + ("\n".join(f"  • {opt}" for opt in q.options) if q.options else ""),
+            title=f"Assessment Challenge ({q.id})",
+            border_style="magenta"
+        ))
+
+        student_ans = answer
+        if not student_ans:
+            student_ans = typer.prompt("Your Answer")
+
+        result = engine.evaluate_submission(
+            student_id=student_id,
+            concept_id=target_cid,
+            item_id=q.id,
+            student_answer=student_ans,
+            latency_sec=6.0,
+        )
+
+        feedback_style = "bold green" if result.is_correct else "bold yellow"
+        console.print(Panel(
+            f"[{feedback_style}]{result.socratic_feedback}[/{feedback_style}]\n"
+            f"[dim]Updated Mastery: {storage.get_student(student_id).concept_mastery.get(target_cid, 0.0) * 100:.1f}%[/dim]",
+            title="Socratic Evaluation",
+            border_style="green" if result.is_correct else "yellow"
+        ))
+
+
+@learn_app.command("diagnose")
+def learn_diagnose(
+    student_id: str = typer.Option(..., "--student", "-s", help="Student ID."),
+    concept_id: str = typer.Option(..., "--concept", "-c", help="Target Concept ID."),
+    domain: str = typer.Option("python_programming", "--domain", "-d", help="Curriculum domain."),
+    json_output: bool = typer.Option(False, "--json", help="Output machine-readable JSON."),
+):
+    """Diagnose upstream prerequisite root causes for student struggle."""
+    settings, storage, graph = _get_learning_context(domain=domain)
+    student = storage.get_student(student_id)
+    if not student:
+        err_console.print(f"[bold red]Student '{student_id}' not found.[/bold red]")
+        raise typer.Exit(code=1)
+
+    diag = graph.diagnose_root_cause(concept_id, student.concept_mastery)
+    if json_output:
+        if diag:
+            output_json({
+                "student_id": student_id,
+                "target_concept": concept_id,
+                "root_prerequisite": diag[0].id,
+                "root_prerequisite_name": diag[0].name,
+                "mastery_score": diag[1],
+                "explanation": diag[2],
+            })
+        else:
+            output_json({"student_id": student_id, "target_concept": concept_id, "root_prerequisite": None, "explanation": "Prerequisites sound."})
+        return
+
+    if diag:
+        console.print(Panel(
+            f"[bold red]Root-Cause Prerequisite Gap Detected![/bold red]\n\n"
+            f"Prerequisite: [bold cyan]{diag[0].name}[/bold cyan] (ID: {diag[0].id})\n"
+            f"Current Mastery: [bold yellow]{diag[1] * 100:.1f}%[/bold yellow]\n\n"
+            f"{diag[2]}",
+            title="Prerequisite Diagnostic Result",
+            border_style="red"
+        ))
+    else:
+        console.print(Panel(
+            f"[bold green]No upstream prerequisite deficiency detected for '{concept_id}'.[/bold green]\n"
+            f"Foundations are sound. Difficulty stems from current topic complexity or pacing.",
+            title="Prerequisite Diagnostic Result",
+            border_style="green"
+        ))
+
+
+@student_app.command("profile")
+def student_profile(
+    student_id: str = typer.Argument(..., help="Student identifier to inspect."),
+    domain: str = typer.Option("python_programming", "--domain", "-d", help="Curriculum domain."),
+    json_output: bool = typer.Option(False, "--json", help="Output machine-readable JSON."),
+):
+    """Display dynamic student profile, learning pace, and concept mastery vector."""
+    settings, storage, graph = _get_learning_context(domain=domain)
+    student = storage.get_student(student_id)
+    if not student:
+        err_console.print(f"[bold red]Student '{student_id}' not found.[/bold red]")
+        raise typer.Exit(code=1)
+
+    if json_output:
+        output_json(student.model_dump())
+        return
+
+    console.print(Panel(
+        f"Student: [bold white]{student.name}[/bold white] [dim]({student.student_id})[/dim]\n"
+        f"Domain: [cyan]{student.domain}[/cyan] | Learning Pace: [bold]{student.learning_pace.value}[/bold]\n"
+        f"Preferred Modality: [green]{student.preferred_modality.value}[/green]\n"
+        f"Assessments Completed: {student.correct_assessments}/{student.total_assessments} "
+        f"({(student.correct_assessments/student.total_assessments*100) if student.total_assessments else 0:.0f}% accuracy)\n"
+        f"Active Struggle Status: [{ 'red' if student.active_struggle else 'green' }]{student.active_struggle.value if student.active_struggle else 'Nominal'}[/]",
+        title="🎓 Dynamic Learner Profile",
+        border_style="cyan"
+    ))
+
+    table = Table(title=f"Concept Mastery Vector ({graph.title})", show_header=True, header_style="bold cyan")
+    table.add_column("Concept ID", style="dim")
+    table.add_column("Concept Name", style="bold")
+    table.add_column("Difficulty", justify="center")
+    table.add_column("Mastery", justify="right")
+    table.add_column("Status")
+
+    for node in graph.topological_order():
+        score = student.concept_mastery.get(node.id, 0.0)
+        pct = f"{score * 100:.1f}%"
+        if score >= 0.8:
+            status = "[bold green]Mastered[/bold green]"
+        elif score >= 0.5:
+            status = "[yellow]Developing[/yellow]"
+        else:
+            status = "[bold red]Prerequisite Gap[/bold red]"
+        table.add_row(node.id, node.name, str(node.difficulty), pct, status)
+
+    console.print(table)
+
+
+@student_app.command("list")
+def student_list(
+    domain: Optional[str] = typer.Option(None, "--domain", "-d", help="Filter by curriculum domain."),
+    json_output: bool = typer.Option(False, "--json", help="Output machine-readable JSON."),
+):
+    """List all registered learners and summary metrics."""
+    settings, storage, _ = _get_learning_context()
+    students = storage.list_students(domain=domain)
+
+    if json_output:
+        output_json([s.model_dump() for s in students])
+        return
+
+    table = Table(title="Registered Students Roster", show_header=True, header_style="bold cyan")
+    table.add_column("ID", style="dim")
+    table.add_column("Name", style="bold")
+    table.add_column("Domain")
+    table.add_column("Pace")
+    table.add_column("Modality")
+    table.add_column("Accuracy", justify="right")
+    table.add_column("Struggle Status")
+
+    for s in students:
+        acc = f"{(s.correct_assessments/s.total_assessments*100):.0f}%" if s.total_assessments else "N/A"
+        st = f"[bold red]{s.active_struggle.value}[/bold red]" if s.active_struggle else "[green]Optimal[/green]"
+        table.add_row(s.student_id, s.name, s.domain, s.learning_pace.value, s.preferred_modality.value, acc, st)
+
+    console.print(table)
+
+
+@student_app.command("create")
+def student_create(
+    student_id: str = typer.Option(..., "--id", "-i", help="Unique student ID."),
+    name: str = typer.Option(..., "--name", "-n", help="Full student name."),
+    domain: str = typer.Option("python_programming", "--domain", "-d", help="Curriculum domain."),
+):
+    """Enroll a new learner into the Personalized Learning Engine."""
+    settings, storage, _ = _get_learning_context(domain=domain)
+    profile = storage.get_or_create_student(student_id, name=name, domain=domain)
+    console.print(f"[bold green]Enrolled learner '{profile.name}' ({profile.student_id}) in '{profile.domain}'.[/bold green]")
+
+
+@teacher_app.command("dashboard")
+def teacher_dashboard(
+    domain: str = typer.Option("python_programming", "--domain", "-d", help="Curriculum domain."),
+    json_output: bool = typer.Option(False, "--json", help="Output machine-readable JSON."),
+):
+    """Display classroom-level analytics, weak concepts, and intervention alerts."""
+    settings, storage, graph = _get_learning_context(domain=domain)
+    service = TeacherDashboardService(storage, graph)
+    summary = service.get_class_summary(domain)
+
+    if json_output:
+        output_json(summary.model_dump())
+        return
+
+    console.print(Panel(
+        f"Domain: [bold cyan]{summary.domain}[/bold cyan] ({graph.title})\n"
+        f"Enrolled Students: [bold]{summary.total_students}[/bold] | Class Average Mastery: [bold green]{summary.average_mastery_pct}%[/bold green]\n"
+        f"Students Requiring Intervention: [bold red]{summary.students_requiring_intervention}[/bold red]\n"
+        f"Primary Weak Concept: [bold yellow]{summary.main_weak_concept_name}[/bold yellow]\n\n"
+        f"[bold white]Recommended Pedagogical Action:[/bold white]\n[cyan]{summary.top_recommended_intervention}[/cyan]",
+        title="👨‍🏫 Teacher Intelligence Dashboard",
+        border_style="blue"
+    ))
+
+    # Active alerts table
+    if summary.active_alerts:
+        alert_table = Table(title="🚨 Active Diagnostic Alerts", show_header=True, header_style="bold red")
+        alert_table.add_column("Alert ID", style="dim")
+        alert_table.add_column("Student", style="bold")
+        alert_table.add_column("Concept")
+        alert_table.add_column("Severity")
+        alert_table.add_column("Diagnosis")
+
+        for a in summary.active_alerts:
+            sev_style = "bold red" if a.severity == "high" else "yellow"
+            alert_table.add_row(a.alert_id, a.student_name, a.concept_id, f"[{sev_style}]{a.severity.upper()}[/{sev_style}]", a.message)
+        console.print(alert_table)
+    else:
+        console.print("[dim green]✔ No active alerts. All students are progressing within expected bounds.[/dim green]")
+
+
+@teacher_app.command("explain")
+def teacher_explain(
+    student_id: str = typer.Option(..., "--student", "-s", help="Student ID to explain intervention for."),
+    concept_id: Optional[str] = typer.Option(None, "--concept", "-c", help="Optional concept ID."),
+    domain: str = typer.Option("python_programming", "--domain", "-d", help="Curriculum domain."),
+    json_output: bool = typer.Option(False, "--json", help="Output machine-readable JSON."),
+):
+    """Generate evidence-backed explainability rationale answering 'Why was this intervention recommended?'"""
+    settings, storage, graph = _get_learning_context(domain=domain)
+    service = TeacherDashboardService(storage, graph)
+    try:
+        expl = service.explain_intervention(student_id, concept_id)
+    except Exception as e:
+        err_console.print(f"[bold red]Error: {e}[/bold red]")
+        raise typer.Exit(code=1)
+
+    if json_output:
+        output_json(expl.model_dump())
+        return
+
+    evidence_text = "\n".join(f"  • {e}" for e in expl.evidence_points)
+    console.print(Panel(
+        f"Student: [bold white]{expl.student_name}[/bold white] [dim]({expl.student_id})[/dim]\n"
+        f"Target Concept: [cyan]{expl.target_concept}[/cyan] | Struggle Classification: [bold red]{expl.struggle_type.value}[/bold red]\n\n"
+        f"[bold yellow]Recommended Action:[/bold yellow]\n{expl.recommended_action}\n\n"
+        f"[bold]Diagnostic Evidence Points:[/bold]\n{evidence_text}\n\n"
+        f"[bold green]Suggested Teaching Strategy:[/bold green]\n{expl.suggested_teaching_strategy}",
+        title="🔍 Explainable AI: Why Was This Intervention Recommended?",
+        border_style="magenta"
+    ))
+
+
+@teacher_app.command("serve")
+@learn_app.command("serve")
+def serve_dashboard(
+    port: int = typer.Option(8000, "--port", "-p", help="Port to bind dashboard server."),
+    host: str = typer.Option("127.0.0.1", "--host", "-h", help="Host interface to bind."),
+    path: Optional[Path] = typer.Option(None, "--path", help="Project path."),
+):
+    """Launch the interactive local Web Dashboard (Mastery Graph, Teacher Analytics, Student Studio)."""
+    from ironclad.learning.web import run_dashboard_server
+
+    settings = get_settings(path)
+    console.print(Panel(
+        f"[bold green]Starting IRONCLAD Personalized Learning Web Dashboard[/bold green]\n\n"
+        f"URL: [bold cyan]http://{host}:{port}[/bold cyan]\n"
+        f"Knowledge Base: [dim]{settings.ironclad_path}[/dim]\n\n"
+        f"Press [bold red]Ctrl+C[/bold red] to stop the server.",
+        title="🌐 Interactive Web Server",
+        border_style="green"
+    ))
+
+    server = run_dashboard_server(settings, host=host, port=port)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Shutting down dashboard server...[/yellow]")
+        server.shutdown()
+
+
 if __name__ == "__main__":
     app()
+

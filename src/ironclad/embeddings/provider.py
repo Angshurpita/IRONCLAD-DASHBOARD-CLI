@@ -16,6 +16,11 @@ class BaseEmbeddingProvider(ABC):
     """Abstract interface for local embedding generation."""
 
     @property
+    def provider_name(self) -> str:
+        """Name of the embedding provider."""
+        return "local"
+
+    @property
     @abstractmethod
     def model_name(self) -> str:
         """Name of the embedding model."""

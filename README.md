@@ -247,6 +247,14 @@ To run completely offline with zero data leaving your machine:
 | `ironclad status` | `[PATH]`<br>`--json` | Display knowledge base summary, document/chunk counts, and index consistency. |
 | `ironclad doctor` | `[PATH]`<br>`--json` | Run diagnostic health checks across Python runtime, storage, SQLite FTS5, embeddings, and inference providers. |
 | `ironclad config` | `[PATH]`<br>`--json` | Display active configuration settings with secrets masked. |
+| `ironclad learn session` | `-s, --student ID`<br>`-c, --concept ID`<br>`-m, --modality STR`<br>`-a, --answer STR` | Launch an adaptive Socratic learning session with grounded lessons and dynamic modality choice. |
+| `ironclad learn diagnose`| `-s, --student ID`<br>`-c, --concept ID` | Trace upstream prerequisite DAG to diagnose root causes of student struggle. |
+| `ironclad student profile`| `<STUDENT_ID>`<br>`-d, --domain STR` | Inspect dynamic learner profile, learning pace, modality preferences, and mastery vector. |
+| `ironclad student list`   | `-d, --domain STR` | List all registered learners with accuracy and struggle classifications. |
+| `ironclad student create` | `-i, --id ID`<br>`-n, --name STR`<br>`-d, --domain STR` | Enroll a new learner into the Personalized Learning Engine. |
+| `ironclad teacher dashboard` | `-d, --domain STR` | Display classroom-level analytics, weak concepts, and active diagnostic alerts. |
+| `ironclad teacher explain`| `-s, --student ID`<br>`-c, --concept ID` | Explainable AI rationale justifying: *"Why was this intervention recommended?"* |
+| `ironclad teacher serve`  | `-p, --port INT`<br>`-h, --host STR` | Start the local interactive Web Dashboard (Mastery Graph, Teacher Analytics, Student Studio). |
 
 ---
 

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IRONCLAD — Class 10th Mathematics AI Personalized Learning</title>
+  <meta name="description" content="AI Personalized Learning Platform for Class 10th Mathematics (CBSE / ICSE / State Boards) featuring Socratic Assessment, Upstream Prerequisite Diagnosis, and Explainable Educator Analytics.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="dark-theme">
+
+  <!-- ========================================================================= -->
+  <!-- 1. AUTHENTICATION & LOGIN SCREEN (MUTUALLY EXCLUSIVE)                     -->
+  <!-- ========================================================================= -->
+  <div id="authScreen" class="portal-view active">
+    <div class="auth-wrapper">
+      <div class="auth-card">
+        <div class="auth-brand">
+          <div class="auth-icon-badge">
+            <svg class="svg-icon lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <h1>IRONCLAD</h1>
+          <p class="auth-subtitle">AI-Driven Personalized Learning Platform</p>
+          <div class="curriculum-badge">Class 10th Mathematics &bull; CBSE / ICSE / State Boards</div>
+        </div>
+
+        <!-- Role Selector Tabs -->
+        <div class="role-tabs">
+          <button id="roleTeacherTab" class="role-tab active" data-role="teacher">
+            <svg class="svg-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+              <path d="M6 6h10"/>
+              <path d="M6 10h10"/>
+              <path d="m9 14 2 2 4-4"/>
+            </svg>
+            Educator Portal
+          </button>
+          <button id="roleStudentTab" class="role-tab" data-role="student">
+            <svg class="svg-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+            </svg>
+            Student Portal
+          </button>
+        </div>
+
+        <!-- Auth Form -->
+        <form id="loginForm" class="auth-form" onsubmit="return false;">
+          <div class="form-group">
+            <label for="authUsername">Institutional Username or Email</label>
+            <div class="input-with-icon">
+              <svg class="svg-icon input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              <input type="text" id="authUsername" class="auth-input" placeholder="e.g. teacher@school.edu" required autocomplete="username">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="authPassword">Access Password</label>
+            <div class="input-with-icon">
+              <svg class="svg-icon input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <input type="password" id="authPassword" class="auth-input" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+          </div>
+
+          <div id="authErrorMessage" class="auth-error-banner hidden"></div>
+
+          <button type="submit" id="loginSubmitBtn" class="action-btn primary auth-btn">
+            Authenticate to Portal
+          </button>
+        </form>
+
+        <!-- Quick 1-Click Evaluation Shortcuts -->
+        <div class="demo-access-divider">
+          <span>Quick Evaluation Access</span>
+        </div>
+
+        <div class="demo-buttons-grid">
+          <button id="quickDemoTeacher" class="demo-quick-btn teacher-demo">
+            <div class="demo-btn-title">
+              <svg class="svg-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                <path d="m9 14 2 2 4-4"/>
+              </svg>
+              Dr. Sunita Sharma
+            </div>
+            <div class="demo-btn-desc">HOD Mathematics &bull; Class 10 Command Center</div>
+          </button>
+
+          <button id="quickDemoPriya" class="demo-quick-btn student-demo">
+            <div class="demo-btn-title">
+              <svg class="svg-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+              </svg>
+              Priya Sharma
+            </div>
+            <div class="demo-btn-desc">Class 10-A &bull; Quadratics / Polynomials Struggle Case</div>
+          </button>
+
+          <button id="quickDemoAarav" class="demo-quick-btn student-demo secondary">
+            <div class="demo-btn-title">Aarav Patel</div>
+            <div class="demo-btn-desc">Class 10-A &bull; High Performer</div>
+          </button>
+
+          <button id="quickDemoRohit" class="demo-quick-btn student-demo secondary">
+            <div class="demo-btn-title">Rohit Verma</div>
+            <div class="demo-btn-desc">Class 10-B &bull; Triangles Similarity Misconception</div>
+          </button>
+        </div>
+
+        <div class="auth-footer-note">
+          Compliant with IEEE / UNESCO AI in Education Ethical Scaffolding Standards
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 2. TEACHER PORTAL — EDUCATOR COMMAND CENTER (MUTUALLY EXCLUSIVE)          -->
+  <!-- ========================================================================= -->
+  <div id="teacherPortal" class="portal-view">
+    <!-- Teacher Header -->
+    <header class="app-header teacher-header">
+      <div class="header-left">
+        <div class="logo-badge">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span class="logo-title">IRONCLAD</span>
+          <span class="role-tag teacher-tag">Educator Intelligence Center</span>
+        </div>
+        <div class="institution-meta">
+          <span class="meta-label">Class 10th Mathematics</span>
+          <span class="meta-sub">Delhi Public School &bull; CBSE / ICSE Division</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="user-profile-badge">
+          <div class="profile-avatar teacher-avatar">
+            <svg class="svg-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+            </svg>
+          </div>
+          <div class="profile-details">
+            <span id="teacherProfileName" class="profile-name">Dr. Sunita Sharma</span>
+            <span class="profile-role">HOD Mathematics</span>
+          </div>
+        </div>
+        <button id="teacherLogoutBtn" class="logout-btn" title="Sign out of Educator Portal">
+          <svg class="svg-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Sign Out
+        </button>
+      </div>
+    </header>
+
+    <!-- Teacher Body -->
+    <main class="portal-main">
+      <div class="view-header">
+        <div>
+          <h2>Class 10th Board Exam Mastery &amp; Diagnostic Interventions</h2>
+          <p class="subtitle">Comprehensive NCERT/CBSE cohort tracking, automated root-cause prerequisite diagnosis, and explainable intervention rationales.</p>
+        </div>
+        <div class="header-actions">
+          <button id="refreshTeacherDataBtn" class="action-btn secondary">
+            <svg class="svg-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+              <path d="M21 3v5h-5"/>
+              <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+              <path d="M3 21v-5h5"/>
+            </svg>
+            Refresh Analytics
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon-wrapper blue">
+            <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="kpi-data">
+            <span class="kpi-label">Class 10 Candidates</span>
+            <span class="kpi-value" id="kpiTotalStudents">4</span>
+            <span class="kpi-sub">Enrolled in Board Prep</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon-wrapper emerald">
+            <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+          </div>
+          <div class="kpi-data">
+            <span class="kpi-label">Class Average Mastery</span>
+            <span class="kpi-value highlight-emerald" id="kpiAvgMastery">74.8%</span>
+            <span class="kpi-sub">Across 13 NCERT Units</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon-wrapper rose">
+            <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <div class="kpi-data">
+            <span class="kpi-label">At-Risk Learners</span>
+            <span class="kpi-value highlight-rose" id="kpiAtRiskCount">2</span>
+            <span class="kpi-sub">Require Diagnostic Review</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon-wrapper purple">
+            <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+              <path d="M6 6h10"/>
+              <path d="M6 10h10"/>
+            </svg>
+          </div>
+          <div class="kpi-data">
+            <span class="kpi-label">Syllabus Coverage</span>
+            <span class="kpi-value" id="kpiUnitsCount">13 Units</span>
+            <span class="kpi-sub">CBSE / ICSE / State Board</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Active Diagnostic Alerts (Section 14 of Research Paper) -->
+      <section class="section-container">
+        <div class="section-title-row">
+          <div class="section-title-left">
+            <svg class="svg-icon text-rose" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <h3>Live Diagnostic Alerts &amp; Prerequisite Deficit Warnings</h3>
+          </div>
+          <span class="tag-pill rose">Automated Root-Cause Detection</span>
+        </div>
+
+        <div id="teacherAlertsContainer" class="alerts-grid">
+          <!-- Populated dynamically -->
+        </div>
+      </section>
+
+      <!-- Class 10th Knowledge Dependency Graph -->
+      <section class="section-container">
+        <div class="section-title-row">
+          <div class="section-title-left">
+            <svg class="svg-icon text-indigo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+            <h3>Class 10th Mathematics Prerequisite DAG</h3>
+          </div>
+          <div class="graph-legend">
+            <span class="legend-badge"><span class="legend-indicator high"></span> &gt;80% Strong</span>
+            <span class="legend-badge"><span class="legend-indicator mid"></span> 50-80% Developing</span>
+            <span class="legend-badge"><span class="legend-indicator low"></span> &lt;50% Deficit</span>
+          </div>
+        </div>
+
+        <div class="graph-layout">
+          <div class="graph-svg-wrapper">
+            <svg id="teacherGraphSvg" class="graph-svg" width="100%" height="480"></svg>
+          </div>
+          <div id="teacherConceptDetail" class="concept-detail-box">
+            <div class="detail-empty-state">
+              <svg class="svg-icon lg text-dim" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              <p>Select any concept node in the DAG above to inspect prerequisite dependency paths and class mastery breakdown.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Student Cohort Roster -->
+      <section class="section-container">
+        <div class="section-title-row">
+          <div class="section-title-left">
+            <svg class="svg-icon text-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <h3>Class 10 Cohort Roster &amp; Board Assessment Metrics</h3>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Student Candidate</th>
+                <th>Learning Pace</th>
+                <th>Preferred Modality</th>
+                <th>Board Assessments</th>
+                <th>Diagnosis &amp; Status</th>
+                <th>Intervention Action</th>
+              </tr>
+            </thead>
+            <tbody id="teacherStudentsTable">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 3. STUDENT PORTAL — PERSONAL LEARNING STUDIO (MUTUALLY EXCLUSIVE)         -->
+  <!-- ========================================================================= -->
+  <div id="studentPortal" class="portal-view">
+    <!-- Student Header -->
+    <header class="app-header student-header">
+      <div class="header-left">
+        <div class="logo-badge">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span class="logo-title">IRONCLAD</span>
+          <span class="role-tag student-tag">Personal Learning Studio</span>
+        </div>
+        <div class="institution-meta">
+          <span class="meta-label">Class 10 Mathematics &bull; Section 10-A</span>
+          <span class="meta-sub">CBSE Board Exam Preparation</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="streak-indicator">
+          <svg class="svg-icon sm text-amber" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+          <span id="studentStreakCount">3 In a Row</span>
+        </div>
+        <div class="user-profile-badge">
+          <div class="profile-avatar student-avatar">
+            <svg class="svg-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+            </svg>
+          </div>
+          <div class="profile-details">
+            <span id="studentProfileName" class="profile-name">Priya Sharma</span>
+            <span class="profile-role">Class 10-A Candidate</span>
+          </div>
+        </div>
+        <button id="studentLogoutBtn" class="logout-btn" title="Sign out of Student Portal">
+          <svg class="svg-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Sign Out
+        </button>
+      </div>
+    </header>
+
+    <!-- Student Main Content -->
+    <main class="portal-main">
+      <div class="view-header">
+        <div>
+          <h2>Class 10th Mathematics Adaptive Learning Studio</h2>
+          <p class="subtitle">Select your syllabus topic, exercise agency over your preferred instructional modality, and practice with authentic Board Socratic assessments.</p>
+        </div>
+      </div>
+
+      <div class="student-workspace-grid">
+        <!-- Left Column: Syllabus Navigator & Agency Modality Selector -->
+        <div class="student-sidebar">
+          <!-- Syllabus Topic Selection -->
+          <div class="control-card">
+            <div class="card-header">
+              <svg class="svg-icon text-indigo sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+              </svg>
+              <h4>Class 10 Board Syllabus Unit</h4>
+            </div>
+            <select id="studentTopicSelect" class="styled-select full-width">
+              <!-- Populated with all 13 Class 10 NCERT Chapters -->
+            </select>
+
+            <div id="topicMasteryMeter" class="topic-mastery-meter">
+              <div class="meter-labels">
+                <span>Your Unit Mastery</span>
+                <span id="topicMasteryScore">35%</span>
+              </div>
+              <div class="meter-track">
+                <div id="topicMasteryFill" class="meter-fill" style="width: 35%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modality Agency Picker (Section 15 of Research Paper) -->
+          <div class="control-card">
+            <div class="card-header">
+              <svg class="svg-icon text-cyan sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+              </svg>
+              <h4>Choose How You Want to Learn</h4>
+            </div>
+            <p class="card-hint">Learner Agency: Switch instructional modality anytime according to your cognitive preference.</p>
+
+            <div class="modality-agency-list">
+              <button class="agency-btn active" data-modality="worked_examples">
+                <div class="agency-title">Worked Examples</div>
+                <div class="agency-sub">Step-by-step problem derivations</div>
+              </button>
+
+              <button class="agency-btn" data-modality="visual_proofs">
+                <div class="agency-title">Visual Proofs</div>
+                <div class="agency-sub">Geometric diagrams &amp; graphs</div>
+              </button>
+
+              <button class="agency-btn" data-modality="interactive_simulations">
+                <div class="agency-title">Interactive Simulations</div>
+                <div class="agency-sub">Dynamic parameter exploration</div>
+              </button>
+
+              <button class="agency-btn" data-modality="real_world_applications">
+                <div class="agency-title">Real-World Applications</div>
+                <div class="agency-sub">Daily life &amp; engineering cases</div>
+              </button>
+
+              <button class="agency-btn" data-modality="practice_drills">
+                <div class="agency-title">Practice Drills</div>
+                <div class="agency-sub">Rapid board pattern questions</div>
+              </button>
+            </div>
+
+            <button id="studentSynthesizeBtn" class="action-btn primary full-width" style="margin-top: 1.25rem;">
+              <svg class="svg-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>
+              </svg>
+              Synthesize Tailored Lesson
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Column: Interactive Lesson Studio & Socratic Assessment -->
+        <div class="student-content-area">
+          <!-- Personalized Lesson Card -->
+          <article class="content-panel">
+            <div class="panel-header">
+              <div>
+                <span id="studentLessonTag" class="tag-pill indigo">NCERT Sequence &bull; WORKED EXAMPLES</span>
+                <h3 id="studentLessonTitle">Quadratic Equations &amp; Nature of Roots</h3>
+              </div>
+              <div class="panel-meta">CBSE Class 10th Standard</div>
+            </div>
+
+            <div id="studentLessonBody" class="lesson-text-body">
+              <!-- Populated dynamically -->
+            </div>
+          </article>
+
+          <!-- Socratic Assessment Sandbox -->
+          <article class="content-panel assessment-panel">
+            <div class="panel-header">
+              <div class="assessment-title-group">
+                <svg class="svg-icon text-amber" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                <h3>Board Socratic Assessment Sandbox</h3>
+              </div>
+              <span class="tag-pill amber">Real-Time Prerequisite Checking</span>
+            </div>
+
+            <div id="studentAssessmentContent" class="assessment-item-container">
+              <!-- Populated dynamically -->
+            </div>
+
+            <div id="studentFeedbackBox" class="feedback-box hidden">
+              <!-- Populated dynamically on answer submission -->
+            </div>
+          </article>
+        </div>
+      </div>
+    </main>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 4. EXPLAINABLE AI INTERVENTION MODAL (EDUCATOR PORTAL)                     -->
+  <!-- ========================================================================= -->
+  <div id="explainModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <svg class="svg-icon text-indigo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <h3 id="modalStudentTitle">Diagnostic Intervention Rationale</h3>
+        </div>
+        <button id="modalCloseBtn" class="modal-close-btn" title="Close Modal">
+          <svg class="svg-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div id="modalBody" class="modal-content">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
