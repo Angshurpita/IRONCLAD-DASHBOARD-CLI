@@ -115,7 +115,7 @@ class LearningDashboardHandler(BaseHTTPRequestHandler):
         # 3. Default to self.path
         return parsed.path
 
-    def _get_effective_query(self) -> Dict[str, List[str]]:
+    def _get_effective_query(self) -> Dict[str, list[str]]:
         """Extracts and merges query parameters from self.path and forwarded proxy URIs."""
         parsed = urlparse(self.path)
         query = parse_qs(parsed.query)
