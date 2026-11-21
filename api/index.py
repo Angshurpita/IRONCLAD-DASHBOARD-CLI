@@ -13,11 +13,14 @@ from urllib.parse import parse_qs, urlparse
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ironclad.vercel")
 
-# Ensure src directory is on sys.path
+# Ensure api, src, and root directories are on sys.path
 ROOT_DIR = Path(__file__).resolve().parent.parent
+API_DIR = Path(__file__).resolve().parent
 SRC_DIR = ROOT_DIR / "src"
-if str(SRC_DIR) not in sys.path:
-    sys.path.insert(0, str(SRC_DIR))
+
+for p in (str(API_DIR), str(SRC_DIR), str(ROOT_DIR)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 from ironclad.config import IroncladSettings
 from ironclad.learning.graph import ConceptGraph, get_available_curricula

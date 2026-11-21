@@ -509,7 +509,7 @@ async function handleAuthSubmit() {
       const contentType = res.headers.get('content-type') || '';
       const data = contentType.includes('application/json') ? await res.json() : {};
       if (!res.ok) {
-        throw new Error(data.error || 'Registration failed.');
+        throw new Error(data.error || `Registration failed (Status ${res.status}).`);
       }
 
       state.token = data.token;
@@ -531,7 +531,7 @@ async function handleAuthSubmit() {
       const contentType = res.headers.get('content-type') || '';
       const data = contentType.includes('application/json') ? await res.json() : {};
       if (!res.ok) {
-        throw new Error(data.error || 'Invalid username or password.');
+        throw new Error(data.error || `Authentication failed (Status ${res.status}).`);
       }
 
       state.token = data.token;

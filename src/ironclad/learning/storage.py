@@ -43,7 +43,10 @@ class LearningStorage:
         """Create tables if they do not exist with WAL mode for concurrency."""
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute("PRAGMA journal_mode = WAL;")
+            try:
+                conn.execute("PRAGMA journal_mode = DELETE;")
+            except Exception:
+                pass
             conn.execute("PRAGMA synchronous = NORMAL;")
             conn.execute("PRAGMA foreign_keys = ON;")
 
