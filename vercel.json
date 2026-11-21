@@ -3,12 +3,8 @@
   "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/api",
-      "destination": "/api/index.py?path=/api"
-    },
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index.py?path=/api/$1"
+      "source": "/api/:path*",
+      "destination": "/api/index?path=/api/:path*"
     },
     {
       "source": "/teacher",

@@ -48,20 +48,21 @@ class LearningDashboardHandler(BaseHTTPRequestHandler):
 
     def _get_effective_path(self) -> str:
         """Resolves request path normalizing across local execution and Vercel serverless rewrites."""
-        parsed = urlparse(self.path)
-        query = parse_qs(parsed.query)
-
-        # 1. Rewritten path query param (from vercel.json: /api/index.py?path=/api/...)
-        if "path" in query and query["path"]:
-            p = query["path"][0]
-            if p:
-                return urlparse(p).path
-
-        # 2. Check HTTP proxy / edge headers
+        # 1. Check HTTP proxy / edge headers first (most accurate representation of client's request)
         for hdr in ("x-forwarded-uri", "x-real-path", "x-matched-path", "x-vercel-matched-path"):
             val = self.headers.get(hdr)
             if val:
-                return urlparse(val).path
+                p = urlparse(val).path
+                if p and p not in ("/api", "/api/", "/api/index", "/api/index.py", "/api/[...path]"):
+                    return p
+
+        # 2. Rewritten path query param (from vercel.json: /api/index?path=/api/...)
+        parsed = urlparse(self.path)
+        query = parse_qs(parsed.query)
+        if "path" in query and query["path"]:
+            p = query["path"][0]
+            if p and p not in ("/api/index", "/api/index.py"):
+                return urlparse(p).path
 
         # 3. Default to self.path
         return parsed.path

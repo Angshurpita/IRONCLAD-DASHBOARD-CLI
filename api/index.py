@@ -67,7 +67,7 @@ class handler(LearningDashboardHandler):
         path = self._get_effective_path()
 
         # Health & info endpoint
-        if path in ("/api", "/api/", "/api/health"):
+        if path in ("/api", "/api/", "/api/index", "/api/index.py", "/api/health"):
             self._send_json({
                 "status": "healthy",
                 "service": "IRONCLAD Personalized Learning API",
