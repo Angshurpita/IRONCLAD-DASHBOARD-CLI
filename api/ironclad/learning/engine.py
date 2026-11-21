@@ -84,7 +84,7 @@ class PersonalizedLearningEngine:
         grounded_excerpts: List[str] = []
         citations: List[str] = []
         try:
-            if self.settings.is_initialized():
+            if self.settings and hasattr(self.settings, "is_initialized") and self.settings.is_initialized():
                 from ironclad.storage.metadata import MetadataStore
                 from ironclad.retrieval.lexical import search_lexical
                 meta = MetadataStore(self.settings.metadata_db_path)
@@ -93,8 +93,15 @@ class PersonalizedLearningEngine:
                     clean_excerpt = r.content.strip().replace("\n\n", " ")[:200]
                     grounded_excerpts.append(f"{r.file_path}:{r.start_line}-{r.end_line}: {clean_excerpt}...")
                     citations.append(f"{r.file_path}:{r.start_line}-{r.end_line}")
+
+            if not grounded_excerpts:
+                # Embedded IRONCLAD RAG retrieval engine
+                from ironclad.learning.rag import retrieve_embedded_rag_context
+                excerpts, cits = retrieve_embedded_rag_context(concept.rag_search_query or concept.name, limit=3)
+                grounded_excerpts.extend(excerpts)
+                citations.extend(cits)
         except Exception as e:
-            logger.debug(f"Knowledge base retrieval omitted for lesson plan: {e}")
+            logger.debug(f"Knowledge base retrieval fallback: {e}")
 
         # Synthesize instruction based on chosen modality
         explanation, worked_example, guided_exercise = self._generate_modality_content(
@@ -712,6 +719,241 @@ class PersonalizedLearningEngine:
                     hint="Find the antiderivative of 2x first, then evaluate at bounds 2 and 0.",
                     prerequisite_id="calc_derivatives",
                     difficulty=3,
+                )
+            )
+        elif cid == "ml_supervised_foundations":
+            items.append(
+                AssessmentItem(
+                    id="q_ml_sup_1",
+                    concept_id=cid,
+                    question="What is the fundamental distinguishing characteristic of Supervised Learning compared to Unsupervised Learning?",
+                    options=[
+                        "Supervised learning requires labeled feature-target pairs (X, Y) to guide optimization",
+                        "Supervised learning does not use loss functions during training",
+                        "Supervised learning only works on unstructured text data",
+                        "Supervised learning operates without any ground truth annotations",
+                    ],
+                    correct_answer="Supervised learning requires labeled feature-target pairs (X, Y) to guide optimization",
+                    explanation="Supervised learning explicitly maps input features X to ground-truth labels Y via empirical risk minimization, whereas unsupervised learning discovers latent structures in unlabeled data.",
+                    hint="Consider what training data must include for the model to know if its prediction is right or wrong.",
+                    prerequisite_id=None,
+                    difficulty=1,
+                )
+            )
+        elif cid == "ml_linear_regression":
+            items.append(
+                AssessmentItem(
+                    id="q_ml_linreg_1",
+                    concept_id=cid,
+                    question="In Linear Regression, what loss function is minimized by Ordinary Least Squares (OLS)?",
+                    options=["Mean Squared Error (MSE)", "Binary Cross-Entropy", "Hinge Loss", "Kullback-Leibler Divergence"],
+                    correct_answer="Mean Squared Error (MSE)",
+                    explanation="Ordinary Least Squares computes the parameters that minimize the sum of squared differences between true targets and linear predictions: MSE = (1/2N) sum (y_hat - y)^2.",
+                    hint="Think about the squared Euclidean distances between actual points and the regression line.",
+                    prerequisite_id="ml_supervised_foundations",
+                    difficulty=2,
+                )
+            )
+            items.append(
+                AssessmentItem(
+                    id="q_ml_linreg_2",
+                    concept_id=cid,
+                    question="How does L2 Ridge Regularization modify the linear regression objective?",
+                    options=[
+                        "Adds a penalty proportional to the sum of squared weights: lambda * ||w||_2^2",
+                        "Adds a penalty proportional to absolute weight magnitudes: lambda * ||w||_1",
+                        "Discards all negative weights automatically",
+                        "Normalizes the learning rate after each epoch",
+                    ],
+                    correct_answer="Adds a penalty proportional to the sum of squared weights: lambda * ||w||_2^2",
+                    explanation="Ridge regression adds an L2 weight penalty lambda * ||w||_2^2 which shrinks coefficients towards zero, curbing variance without forcing exact sparsity.",
+                    hint="Recall that L2 refers to Euclidean 2-norm squared.",
+                    prerequisite_id="ml_supervised_foundations",
+                    difficulty=2,
+                )
+            )
+        elif cid == "ml_logistic_classification":
+            items.append(
+                AssessmentItem(
+                    id="q_ml_logreg_1",
+                    concept_id=cid,
+                    question="Why is the Sigmoid activation function sigma(z) = 1 / (1 + e^(-z)) applied to the linear logit in Logistic Regression?",
+                    options=[
+                        "To compress continuous real-valued scores into valid probability values in the range (0, 1)",
+                        "To eliminate the need for cross-entropy loss computation",
+                        "To make the model completely non-differentiable",
+                        "To prevent gradient descent from updating weights",
+                    ],
+                    correct_answer="To compress continuous real-valued scores into valid probability values in the range (0, 1)",
+                    explanation="Sigmoid monotonically maps (-inf, +inf) to (0, 1), allowing model outputs to be interpreted directly as Bernoulli class posterior probabilities P(y=1|x).",
+                    hint="Probabilities must lie strictly between 0 and 1.",
+                    prerequisite_id="ml_supervised_foundations",
+                    difficulty=2,
+                )
+            )
+        elif cid == "ml_decision_trees_ensembles":
+            items.append(
+                AssessmentItem(
+                    id="q_ml_tree_1",
+                    concept_id=cid,
+                    question="What is the primary variance-reduction mechanism behind Random Forests?",
+                    options=[
+                        "Bootstrap aggregating (Bagging) combined with random feature subspace sampling across decorrelated trees",
+                        "Sequentially training shallow decision stumps to fit pseudo-residuals",
+                        "Replacing entropy splits with gradient descent updates",
+                        "Applying L1 regularization directly to leaf nodes",
+                    ],
+                    correct_answer="Bootstrap aggregating (Bagging) combined with random feature subspace sampling across decorrelated trees",
+                    explanation="Random Forests reduce estimator variance without inflating bias by averaging multiple deep, decorrelated decision trees trained on bootstrap samples with random feature subsets.",
+                    hint="Ensemble bagging aggregates predictions from decorrelated trees.",
+                    prerequisite_id="ml_logistic_classification",
+                    difficulty=3,
+                )
+            )
+        elif cid == "ml_neural_networks_backprop":
+            items.append(
+                AssessmentItem(
+                    id="q_ml_nn_1",
+                    concept_id=cid,
+                    question="Which mathematical principle enables the Backpropagation algorithm to compute partial derivatives of loss with respect to early layer weights?",
+                    options=[
+                        "The Multivariate Calculus Chain Rule",
+                        "The Central Limit Theorem",
+                        "The Fundamental Theorem of Arithmetic",
+                        "Euler's Totient Theorem",
+                    ],
+                    correct_answer="The Multivariate Calculus Chain Rule",
+                    explanation="Backpropagation applies the Chain Rule recursively from the output loss backward through intermediate affine transformations and activation layers: dL/dw = (dL/dz) * (dz/dw).",
+                    hint="Think of composite function differentiation: d/dx f(g(x)) = f'(g(x)) * g'(x).",
+                    prerequisite_id="ml_linear_regression",
+                    difficulty=4,
+                )
+            )
+        elif cid == "ml_unsupervised_foundations":
+            items.append(
+                AssessmentItem(
+                    id="q_ml_unsup_1",
+                    concept_id=cid,
+                    question="Which of the following problems is an example of Unsupervised Learning?",
+                    options=[
+                        "Customer segmentation based on unlabeled transaction behavior patterns",
+                        "Predicting house sale prices given historical property attributes and known sale prices",
+                        "Spam email classification trained on user-flagged junk messages",
+                        "Recognizing handwritten digits using labeled MNIST images",
+                    ],
+                    correct_answer="Customer segmentation based on unlabeled transaction behavior patterns",
+                    explanation="Customer segmentation partitions records without predefined target labels by discovering geometric cluster proximity or latent density groups directly from data.",
+                    hint="Look for the task where ground truth labels are NOT provided during training.",
+                    prerequisite_id=None,
+                    difficulty=1,
+                )
+            )
+        elif cid == "ml_clustering_kmeans":
+            items.append(
+                AssessmentItem(
+                    id="q_ml_kmeans_1",
+                    concept_id=cid,
+                    question="In Lloyd's K-Means clustering algorithm, how are cluster centroids updated during each iteration?",
+                    options=[
+                        "By computing the mean coordinates of all data points currently assigned to that cluster",
+                        "By randomly sampling a new point from the entire dataset",
+                        "By computing the cross-product of cluster boundary vectors",
+                        "By running gradient ascent on the Silhouette score",
+                    ],
+                    correct_answer="By computing the mean coordinates of all data points currently assigned to that cluster",
+                    explanation="The update step recalculates each centroid mu_k as the component-wise average (arithmetic mean) of all points currently belonging to cluster S_k, minimizing within-cluster inertia.",
+                    hint="Centroid literally means the geometric center or average position of points.",
+                    prerequisite_id="ml_unsupervised_foundations",
+                    difficulty=2,
+                )
+            )
+            items.append(
+                AssessmentItem(
+                    id="q_ml_kmeans_2",
+                    concept_id=cid,
+                    question="What heuristic is commonly used to choose the number of clusters K by locating the inflection point in the inertia plot?",
+                    options=["The Elbow Method", "The Gradient Plateau Test", "The ROC-AUC Curve", "The Confusion Matrix"],
+                    correct_answer="The Elbow Method",
+                    explanation="The Elbow Method plots within-cluster sum of squares (Inertia) against K; the inflection point ('elbow') marks where adding additional clusters yields diminishing returns.",
+                    hint="Think of the human arm joint shape in the error curve.",
+                    prerequisite_id="ml_unsupervised_foundations",
+                    difficulty=2,
+                )
+            )
+        elif cid == "ml_pca_dim_reduction":
+            items.append(
+                AssessmentItem(
+                    id="q_ml_pca_1",
+                    concept_id=cid,
+                    question="In Principal Component Analysis (PCA), what do the eigenvectors of the data covariance matrix represent?",
+                    options=[
+                        "The directions of maximal variance in the feature space",
+                        "The cluster centroids of the dataset",
+                        "The classification decision boundaries",
+                        "The learning rate weights of the neural network",
+                    ],
+                    correct_answer="The directions of maximal variance in the feature space",
+                    explanation="Eigenvectors of the empirical covariance matrix define orthogonal axes along which the data exhibits maximal variance, with corresponding eigenvalues indicating variance magnitude.",
+                    hint="Principal components identify the axes of greatest spread.",
+                    prerequisite_id="ml_unsupervised_foundations",
+                    difficulty=3,
+                )
+            )
+        elif cid == "ml_reinforcement_learning_foundations":
+            items.append(
+                AssessmentItem(
+                    id="q_ml_rl_1",
+                    concept_id=cid,
+                    question="In Reinforcement Learning, what role does the discount factor gamma in [0, 1) play in the cumulative return G_t?",
+                    options=[
+                        "It weights immediate rewards more heavily than distant future rewards and ensures mathematical convergence",
+                        "It controls the batch size during neural network backpropagation",
+                        "It specifies the number of clusters in the environment",
+                        "It forces the agent to take random actions 50% of the time",
+                    ],
+                    correct_answer="It weights immediate rewards more heavily than distant future rewards and ensures mathematical convergence",
+                    explanation="Discount factor gamma balances immediate versus delayed gratification: gamma = 0 makes the agent purely myopic, while gamma approaching 1 prioritizes long-term future trajectories.",
+                    hint="Think of inflation or interest: a dollar today is worth more than a dollar a year from now.",
+                    prerequisite_id=None,
+                    difficulty=2,
+                )
+            )
+        elif cid == "ml_mdp_bellman":
+            items.append(
+                AssessmentItem(
+                    id="q_ml_mdp_1",
+                    concept_id=cid,
+                    question="What does the Markov Property state in a Markov Decision Process (MDP)?",
+                    options=[
+                        "The future state and reward depend only on the current state and action, independent of the past trajectory history",
+                        "Every state must have a non-negative scalar reward",
+                        "The policy must be deterministic rather than stochastic",
+                        "The environment must be fully linear and differentiable",
+                    ],
+                    correct_answer="The future state and reward depend only on the current state and action, independent of the past trajectory history",
+                    explanation="The Markov Property asserts memorylessness: P(s_{t+1}|s_t, a_t, s_{t-1}, ...) = P(s_{t+1}|s_t, a_t). The current state encapsulates all necessary information from the past.",
+                    hint="A Markov process is memoryless: given the present, the past does not influence the future.",
+                    prerequisite_id="ml_reinforcement_learning_foundations",
+                    difficulty=3,
+                )
+            )
+        elif cid == "ml_q_learning_policy_gradients":
+            items.append(
+                AssessmentItem(
+                    id="q_ml_ql_1",
+                    concept_id=cid,
+                    question="What is the fundamental difference between Q-Learning and Policy Gradient methods (e.g. REINFORCE)?",
+                    options=[
+                        "Q-Learning is value-based (learning action-value function Q(s, a)), while Policy Gradients directly optimize parameterized policy weights pi_theta(a|s)",
+                        "Q-Learning requires labeled supervisory data, while Policy Gradients are unsupervised",
+                        "Q-Learning cannot be used in episodic environments",
+                        "Policy Gradient methods do not use scalar rewards",
+                    ],
+                    correct_answer="Q-Learning is value-based (learning action-value function Q(s, a)), while Policy Gradients directly optimize parameterized policy weights pi_theta(a|s)",
+                    explanation="Q-Learning learns action-values via Temporal Difference Bellman updates and derives policies via argmax, whereas Policy Gradient methods directly parameterize policy distribution pi_theta and ascend expected return gradients.",
+                    hint="Contrast value function approximation versus direct policy parameterization.",
+                    prerequisite_id="ml_mdp_bellman",
+                    difficulty=4,
                 )
             )
         else:

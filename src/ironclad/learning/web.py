@@ -37,7 +37,7 @@ class LearningDashboardHandler(BaseHTTPRequestHandler):
     _server_settings_val: Any = None
     _storage_val: Any = None
     _curricula_val: Any = None
-    active_domain: str = "class10_maths"
+    active_domain: str = "machine_learning"
 
     @property
     def storage(self) -> Any:
@@ -506,7 +506,7 @@ def run_dashboard_server(
     LearningDashboardHandler.server_settings = settings
     LearningDashboardHandler.storage = storage
     LearningDashboardHandler.curricula = curricula
-    LearningDashboardHandler.active_domain = "class10_maths"
+    LearningDashboardHandler.active_domain = "machine_learning"
 
     server = CustomServer((host, port), LearningDashboardHandler)
     return server

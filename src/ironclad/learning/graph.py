@@ -637,12 +637,191 @@ def get_class10_maths_curriculum() -> Curriculum:
     )
 
 
+def get_machine_learning_curriculum() -> Curriculum:
+    """Pre-seeded curriculum for Machine Learning & Artificial Intelligence."""
+    concepts = {
+        "ml_supervised_foundations": ConceptNode(
+            id="ml_supervised_foundations",
+            name="Supervised Learning & Empirical Risk",
+            domain="machine_learning",
+            description="Supervised learning paradigms, labeled feature-target pairs, empirical risk minimization, train/val/test splits, and bias-variance tradeoff.",
+            prerequisites=[],
+            difficulty=1,
+            learning_objectives=[
+                "Differentiate supervised learning from unsupervised and reinforcement paradigms",
+                "Formulate empirical risk minimization on training datasets",
+                "Diagnose underfitting and overfitting using validation curves",
+            ],
+            rag_search_query="supervised learning empirical risk minimization bias variance labeled data",
+            real_world_context="Credit scoring, spam filtering, medical diagnosis prediction, and customer churn forecasting.",
+        ),
+        "ml_linear_regression": ConceptNode(
+            id="ml_linear_regression",
+            name="Linear Regression & Gradient Descent",
+            domain="machine_learning",
+            description="Ordinary least squares, Mean Squared Error (MSE), analytical Normal Equation, and iterative Gradient Descent optimization.",
+            prerequisites=["ml_supervised_foundations"],
+            difficulty=2,
+            learning_objectives=[
+                "Derive and minimize the Mean Squared Error loss function",
+                "Implement batch and stochastic gradient descent updates with learning rate scheduling",
+                "Apply L1 Lasso and L2 Ridge regularization to prevent overfitting",
+            ],
+            rag_search_query="linear regression mean squared error gradient descent normal equation ridge lasso",
+            real_world_context="House price valuation, algorithmic stock return modeling, and sensor calibration.",
+        ),
+        "ml_logistic_classification": ConceptNode(
+            id="ml_logistic_classification",
+            name="Logistic Regression & Decision Boundaries",
+            domain="machine_learning",
+            description="Probabilistic classification, Sigmoid function, Binary Cross-Entropy loss, log-odds, and decision boundary calibration.",
+            prerequisites=["ml_supervised_foundations"],
+            difficulty=2,
+            learning_objectives=[
+                "Map linear outputs to class probabilities using the Sigmoid activation function",
+                "Optimize weights via Binary Cross-Entropy maximum likelihood estimation",
+                "Evaluate binary classifiers with Confusion Matrices, Precision, Recall, and ROC-AUC",
+            ],
+            rag_search_query="logistic regression sigmoid cross entropy decision boundary roc auc classification",
+            real_world_context="E-commerce fraud detection, click-through rate prediction, and clinical disease diagnosis.",
+        ),
+        "ml_decision_trees_ensembles": ConceptNode(
+            id="ml_decision_trees_ensembles",
+            name="Decision Trees, Random Forests, & Boosting",
+            domain="machine_learning",
+            description="Recursive binary partitioning, Information Gain, Gini Impurity, Bagging with Random Forests, and Gradient Boosted Trees.",
+            prerequisites=["ml_logistic_classification"],
+            difficulty=3,
+            learning_objectives=[
+                "Calculate Information Gain and Gini Impurity for optimal tree splits",
+                "Contrast Bagging (variance reduction in Random Forests) with Boosting (bias reduction in GBDT/XGBoost)",
+                "Tune tree depth, minimum samples per split, and ensemble estimators",
+            ],
+            rag_search_query="decision tree information gain gini impurity random forest gradient boosting xgboost",
+            real_world_context="Loan default underwriting, search engine document ranking, and tabular competition modeling.",
+        ),
+        "ml_neural_networks_backprop": ConceptNode(
+            id="ml_neural_networks_backprop",
+            name="Neural Networks & Backpropagation",
+            domain="machine_learning",
+            description="Multilayer Perceptrons (MLP), forward pass affine transformations, non-linear activations (ReLU, GELU), Chain Rule backpropagation, and Adam optimizer.",
+            prerequisites=["ml_linear_regression", "ml_logistic_classification"],
+            difficulty=4,
+            learning_objectives=[
+                "Compute matrix forward activations across dense hidden layers",
+                "Derive gradient error terms using the multivariate calculus Chain Rule",
+                "Train deep networks with batch normalization, dropout, and adaptive optimizers",
+            ],
+            rag_search_query="neural network backpropagation chain rule activation function relu adam optimizer",
+            real_world_context="Computer vision recognition, speech recognition acoustic models, and natural language embeddings.",
+        ),
+        "ml_unsupervised_foundations": ConceptNode(
+            id="ml_unsupervised_foundations",
+            name="Unsupervised Learning & Pattern Discovery",
+            domain="machine_learning",
+            description="Unlabeled data structures, density estimation, geometric clustering, latent manifold learning, and anomaly detection.",
+            prerequisites=[],
+            difficulty=1,
+            learning_objectives=[
+                "Identify tasks suitable for unsupervised learning without label annotations",
+                "Characterize latent distributions and underlying geometric manifolds",
+                "Formulate distance and similarity metrics (Euclidean, Cosine, Mahalanobis)",
+            ],
+            rag_search_query="unsupervised learning unlabeled data latent representation pattern discovery density estimation",
+            real_world_context="Customer market segmentation, genomic sequence clustering, and document topic modeling.",
+        ),
+        "ml_clustering_kmeans": ConceptNode(
+            id="ml_clustering_kmeans",
+            name="K-Means Clustering & Centroid Optimization",
+            domain="machine_learning",
+            description="Iterative Lloyd's algorithm, within-cluster sum of squares (Inertia), Voronoi tessellations, Elbow Method, and Silhouette Analysis.",
+            prerequisites=["ml_unsupervised_foundations"],
+            difficulty=2,
+            learning_objectives=[
+                "Execute the alternating assignment and update steps of Lloyd's K-Means algorithm",
+                "Select optimal cluster count K using the Elbow Method and Silhouette Coefficient",
+                "Address sensitivity to initial centroid placement using K-Means++ seeding",
+            ],
+            rag_search_query="k-means clustering centroid optimization inertia elbow method silhouette score voronoi",
+            real_world_context="Retail store location zoning, image color quantization, and network intrusion anomaly grouping.",
+        ),
+        "ml_pca_dim_reduction": ConceptNode(
+            id="ml_pca_dim_reduction",
+            name="Principal Component Analysis (PCA)",
+            domain="machine_learning",
+            description="Orthogonal projections, empirical covariance matrix, spectral eigendecomposition, Singular Value Decomposition (SVD), and variance retention.",
+            prerequisites=["ml_unsupervised_foundations"],
+            difficulty=3,
+            learning_objectives=[
+                "Compute the empirical covariance matrix of zero-centered high-dimensional features",
+                "Derive principal axes via eigendecomposition and SVD",
+                "Project data into reduced orthogonal subspaces while retaining target variance",
+            ],
+            rag_search_query="principal component analysis pca dimensionality reduction covariance matrix eigenvalues eigenvectors svd",
+            real_world_context="Facial eigenfaces recognition, genomics gene expression compression, and portfolio risk factor analysis.",
+        ),
+        "ml_reinforcement_learning_foundations": ConceptNode(
+            id="ml_reinforcement_learning_foundations",
+            name="Reinforcement Learning: Agent-Environment Loop",
+            domain="machine_learning",
+            description="Agent-environment interaction, states, actions, scalar rewards, transition dynamics, trajectories, and discounted cumulative returns.",
+            prerequisites=[],
+            difficulty=2,
+            learning_objectives=[
+                "Formalize sequential decision making with states, actions, rewards, and transitions",
+                "Calculate discounted cumulative future returns with discount factor gamma",
+                "Differentiate passive policy evaluation from active policy improvement",
+            ],
+            rag_search_query="reinforcement learning agent environment state action reward discount factor gamma trajectory return",
+            real_world_context="Autonomous vehicle highway navigation, robotic arm manipulation, and automated algorithmic trading.",
+        ),
+        "ml_mdp_bellman": ConceptNode(
+            id="ml_mdp_bellman",
+            name="Markov Decision Processes & Bellman Equations",
+            domain="machine_learning",
+            description="Markov property, formal MDP 5-tuple, State-Value function V(s), Action-Value function Q(s, a), and recursive Bellman Expectation/Optimality Equations.",
+            prerequisites=["ml_reinforcement_learning_foundations"],
+            difficulty=3,
+            learning_objectives=[
+                "Verify the Markov Property for state transition probability distributions",
+                "Formulate and solve recursive Bellman Expectation equations for value functions",
+                "Apply the Bellman Optimality Principle to identify optimal policies",
+            ],
+            rag_search_query="markov decision process mdp markov property state value function bellman expectation optimality equation",
+            real_world_context="Resource allocation scheduling, game playing (Chess, Go), and smart grid power dispatching.",
+        ),
+        "ml_q_learning_policy_gradients": ConceptNode(
+            id="ml_q_learning_policy_gradients",
+            name="Q-Learning & Policy Gradient Methods",
+            domain="machine_learning",
+            description="Model-free control, Temporal Difference (TD) learning, epsilon-greedy exploration, off-policy Q-Learning, Deep Q-Networks (DQN), and REINFORCE Policy Gradients.",
+            prerequisites=["ml_mdp_bellman"],
+            difficulty=4,
+            learning_objectives=[
+                "Implement off-policy Temporal Difference Q-learning updates with exploration-exploitation decay",
+                "Stabilize Deep Q-Networks using experience replay buffers and target networks",
+                "Derive and apply the Policy Gradient Theorem for continuous action control",
+            ],
+            rag_search_query="temporal difference q-learning off-policy bellman error deep q network policy gradient reinforce actor critic",
+            real_world_context="Video game superhuman play (Atari, Dota), quadruped robot locomotion, and LLM RLHF alignment.",
+        ),
+    }
+    return Curriculum(
+        domain="machine_learning",
+        title="Machine Learning & AI (Supervised, Unsupervised & RL)",
+        description="Comprehensive curriculum spanning Supervised Learning (Regression, Classification, Decision Trees, Neural Networks), Unsupervised Learning (Clustering, PCA), and Reinforcement Learning (MDPs, Bellman Equations, Q-Learning, Policy Gradients).",
+        concepts=concepts,
+    )
+
+
 def get_available_curricula() -> Dict[str, Curriculum]:
-    """Registry of built-in and loaded curricula, prioritizing Class 10th Mathematics."""
+    """Registry of built-in and loaded curricula, featuring Machine Learning and Mathematics."""
+    ml = get_machine_learning_curriculum()
     c10 = get_class10_maths_curriculum()
     py = get_python_curriculum()
     calc = get_calculus_curriculum()
     return {
+        ml.domain: ml,
         c10.domain: c10,
         py.domain: py,
         calc.domain: calc,

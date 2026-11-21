@@ -15,7 +15,7 @@
 const state = {
   token: localStorage.getItem('ironclad_token') || null,
   user: null, // { username, role, name, student_id, school_name }
-  domain: 'class10_maths',
+  domain: 'machine_learning',
   nodes: [],
   nodeMap: {},
   authMode: 'login', // 'login' | 'register'
@@ -62,6 +62,8 @@ const authAlertBanner = document.getElementById('authAlertBanner');
 const authSubmitBtn = document.getElementById('authSubmitBtn');
 
 // Student Studio Elements
+const studentDomainSelect = document.getElementById('studentDomainSelect');
+const teacherDomainSelect = document.getElementById('teacherDomainSelect');
 const studentTopicSelect = document.getElementById('studentTopicSelect');
 const topicMasteryScore = document.getElementById('topicMasteryScore');
 const topicMasteryFill = document.getElementById('topicMasteryFill');
@@ -411,6 +413,25 @@ function setupEventListeners() {
     });
   });
 
+  // Curriculum Track Change
+  if (studentDomainSelect) {
+    studentDomainSelect.addEventListener('change', async () => {
+      state.domain = studentDomainSelect.value;
+      if (teacherDomainSelect) teacherDomainSelect.value = state.domain;
+      await loadCurriculum();
+      await initializeStudentStudio();
+    });
+  }
+
+  if (teacherDomainSelect) {
+    teacherDomainSelect.addEventListener('change', async () => {
+      state.domain = teacherDomainSelect.value;
+      if (studentDomainSelect) studentDomainSelect.value = state.domain;
+      await loadCurriculum();
+      await loadTeacherDashboard();
+    });
+  }
+
   // Student Topic Change
   studentTopicSelect.addEventListener('change', () => {
     updateStudentTopicMasteryDisplay();
@@ -661,6 +682,7 @@ async function loadCurriculumData() {
 // 6. STUDENT PORTAL CONTROLLER
 // ============================================================================
 async function initializeStudentStudio() {
+  if (studentDomainSelect) studentDomainSelect.value = state.domain;
   // Populate syllabus dropdown
   studentTopicSelect.innerHTML = state.nodes
     .map((n) => `<option value="${n.id}">${n.name}</option>`)
@@ -757,11 +779,27 @@ async function generateStudentLesson() {
 
     studentLessonTitle.textContent = lesson.concept_name || 'Lesson';
     const cleanModality = (lesson.modality || state.activeModality || 'worked_examples').replace(/_/g, ' ').toUpperCase();
-    studentLessonTag.textContent = `NCERT SEQUENCE &bull; ${cleanModality}`;
+    const cleanDomain = state.domain === 'machine_learning' ? 'MACHINE LEARNING & AI' : (state.domain === 'class10_maths' ? 'NCERT SEQUENCE' : state.domain.replace(/_/g, ' ').toUpperCase());
+    studentLessonTag.innerHTML = `${cleanDomain} &bull; ${cleanModality}`;
 
     const explanationHtml = (lesson.explanation || 'No explanation available.').replace(/\n\n/g, '<br><br>');
     const workedExampleHtml = lesson.worked_example || 'No worked example available.';
     const guidedExerciseHtml = lesson.guided_exercise || 'No guided exercise available.';
+
+    const ragCitationsHtml = (lesson.citations && lesson.citations.length > 0)
+      ? `<div class="rag-citation-box">
+          <div class="rag-citation-header">
+            <svg class="svg-icon sm text-emerald" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <strong>IRONCLAD Grounded Retrieval Verification</strong>
+            <span class="rag-badge">RAG Active</span>
+          </div>
+          <div class="rag-citation-list">
+            ${lesson.citations.map((cite) => `<span class="rag-citation-pill">📄 ${cite}</span>`).join('')}
+          </div>
+        </div>`
+      : '';
 
     studentLessonBody.innerHTML = `
       ${
@@ -774,6 +812,8 @@ async function generateStudentLesson() {
       <div style="margin-bottom: 1.25rem;">
         ${explanationHtml}
       </div>
+
+      ${ragCitationsHtml}
 
       <div class="lesson-box-section">
         <div class="lesson-box-title">Step-by-Step Worked Example</div>
@@ -920,6 +960,7 @@ async function submitStudentAssessment() {
 // 7. EDUCATOR PORTAL CONTROLLER
 // ============================================================================
 async function loadTeacherAnalytics() {
+  if (teacherDomainSelect) teacherDomainSelect.value = state.domain;
   try {
     const summaryRes = await fetch(`/api/class-summary?domain=${state.domain}`, {
       headers: getAuthHeaders(),

@@ -3,7 +3,7 @@
   "cleanUrls": true,
   "functions": {
     "api/**/*.py": {
-      "includeFiles": "{src/**,api/**}"
+      "includeFiles": "{src/**,api/**,docs/**}"
     }
   },
   "rewrites": [

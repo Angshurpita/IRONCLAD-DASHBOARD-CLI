@@ -223,6 +223,21 @@ class LearningStorage:
                             json.dumps({"worked_examples": 0.15, "socratic_dialogue": 0.45, "visual_diagrams": 0.25, "formal_proof": 0.15}),
                             18, 26, 24, 5.4, None, 6, 0, now, now
                         ),
+                        (
+                            "s_maya", "Maya Lin", "machine_learning", "fast", "simulation",
+                            json.dumps({"simulation": 0.45, "worked_examples": 0.30, "visual": 0.15, "practice_questions": 0.10}),
+                            16, 24, 22, 6.2, None, 5, 0, now, now
+                        ),
+                        (
+                            "s_chen", "David Chen", "machine_learning", "standard", "visual",
+                            json.dumps({"visual": 0.40, "worked_examples": 0.30, "simulation": 0.20, "practice_questions": 0.10}),
+                            12, 18, 14, 8.5, "knowledge_gap", 2, 0, now, now
+                        ),
+                        (
+                            "s_zara", "Zara Ahmed", "machine_learning", "thorough", "worked_examples",
+                            json.dumps({"worked_examples": 0.40, "simulation": 0.25, "visual": 0.20, "practice_questions": 0.15}),
+                            10, 15, 11, 9.8, "learning_behavior", 1, 1, now, now
+                        ),
                     ]
                     conn.executemany(
                         """
@@ -247,6 +262,15 @@ class LearningStorage:
                         ("s_priya", "c10_real_numbers_euclid", 0.96, 5, now),
                         ("s_priya", "c10_polynomials_zeroes_geometry", 0.92, 4, now),
                         ("s_priya", "c10_triangles_similarity_criteria", 0.88, 3, now),
+                        ("s_maya", "ml_supervised_foundations", 0.95, 4, now),
+                        ("s_maya", "ml_linear_regression", 0.90, 3, now),
+                        ("s_maya", "ml_unsupervised_foundations", 0.88, 3, now),
+                        ("s_maya", "ml_reinforcement_learning_foundations", 0.85, 2, now),
+                        ("s_chen", "ml_supervised_foundations", 0.82, 3, now),
+                        ("s_chen", "ml_clustering_kmeans", 0.78, 2, now),
+                        ("s_chen", "ml_mdp_bellman", 0.42, 3, now),
+                        ("s_zara", "ml_supervised_foundations", 0.75, 2, now),
+                        ("s_zara", "ml_logistic_classification", 0.68, 2, now),
                     ]
                     conn.executemany(
                         """
@@ -586,7 +610,7 @@ class LearningStorage:
             pass
 
     def get_or_create_student(
-        self, student_id: str, name: str, domain: str = "class10_maths"
+        self, student_id: str, name: str, domain: str = "machine_learning"
     ) -> LearnerProfile:
         """Retrieves an existing learner profile or creates a new initialized one."""
         existing = self.get_student(student_id)

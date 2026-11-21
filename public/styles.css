@@ -1418,3 +1418,53 @@ body.lite-theme {
   height: 14px;
 }
 
+
+/* RAG Grounded Citations Box */
+.rag-citation-box {
+  margin-top: 1.25rem;
+  padding: 0.85rem 1rem;
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 8px;
+}
+
+.rag-citation-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #065f46;
+  margin-bottom: 0.5rem;
+}
+
+.rag-badge {
+  margin-left: auto;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  background: #10b981;
+  color: #ffffff;
+}
+
+.rag-citation-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.rag-citation-pill {
+  display: inline-flex;
+  align-items: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  color: #047857;
+  background: #ffffff;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 6px;
+  padding: 0.25rem 0.6rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
