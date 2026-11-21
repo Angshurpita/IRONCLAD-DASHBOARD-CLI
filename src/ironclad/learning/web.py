@@ -166,29 +166,59 @@ class LearningDashboardHandler(BaseHTTPRequestHandler):
         path = parsed_url.path
         body = self._read_json_body()
 
+        # Auth: Register
+        if path == "/api/auth/register":
+            username = body.get("username", "").strip()
+            password = body.get("password", "").strip()
+            name = body.get("name", "").strip()
+            role = body.get("role", "student").strip().lower()
+            school_name = body.get("school_name", "").strip() or "IRONCLAD Academy"
+
+            if not username or len(username) < 3:
+                self._send_json({"error": "Username or email must be at least 3 characters."}, status=400)
+                return
+            if not password or len(password) < 4:
+                self._send_json({"error": "Password must be at least 4 characters."}, status=400)
+                return
+            if not name:
+                name = username.split("@")[0].replace(".", " ").title()
+            if role not in ("student", "teacher"):
+                role = "student"
+
+            if self.storage.user_exists(username):
+                self._send_json({"error": "An account with this username or email already exists."}, status=409)
+                return
+
+            student_id = f"s_{username.replace('@', '_').replace('.', '_')}" if role == "student" else None
+            user = self.storage.create_user(
+                username=username,
+                password_clear=password,
+                role=role,
+                name=name,
+                student_id=student_id,
+                school_name=school_name,
+            )
+
+            if role == "student" and student_id:
+                self.storage.get_or_create_student(student_id=student_id, name=name, domain=self.active_domain)
+
+            token = self.storage.create_session(user["username"], user["role"])
+            self._send_json({"token": token, "user": user, "message": "Account created successfully."}, status=201)
+            return
+
         # Auth: Login
         if path == "/api/auth/login":
             username = body.get("username", "").strip()
             password = body.get("password", "").strip()
-            role_hint = body.get("role", "")
+            role_hint = body.get("role", "").strip().lower()
+
+            if not username or not password:
+                self._send_json({"error": "Please provide both username and password."}, status=400)
+                return
 
             user = self.storage.authenticate_user(username, password)
             if not user:
-                # Demo accounts shortcut
-                uname_low = username.lower()
-                if uname_low in ("teacher", "teacher@school.edu", "sunita", "hod"):
-                    user = self.storage.authenticate_user("teacher@school.edu", "teacher123")
-                elif uname_low in ("priya", "priya@school.edu", "s_priya"):
-                    user = self.storage.authenticate_user("priya@school.edu", "student123")
-                elif uname_low in ("aarav", "aarav@school.edu", "s_aarav"):
-                    user = self.storage.authenticate_user("aarav@school.edu", "student123")
-                elif uname_low in ("rohit", "rohit@school.edu", "s_rohit"):
-                    user = self.storage.authenticate_user("rohit@school.edu", "student123")
-                elif uname_low in ("ananya", "ananya@school.edu", "s_ananya"):
-                    user = self.storage.authenticate_user("ananya@school.edu", "student123")
-
-            if not user:
-                self._send_json({"error": "Invalid username or password. Check credentials or use quick-demo."}, status=401)
+                self._send_json({"error": "Invalid credentials. Please verify your username and password."}, status=401)
                 return
 
             if role_hint and user.get("role") != role_hint:
@@ -197,29 +227,6 @@ class LearningDashboardHandler(BaseHTTPRequestHandler):
 
             token = self.storage.create_session(user["username"], user["role"])
             self._send_json({"token": token, "user": user})
-            return
-
-        # Auth: Demo quick switcher
-        if path == "/api/auth/demo":
-            role = body.get("role", "student")
-            student_id = body.get("student_id", "s_priya")
-            if role == "teacher":
-                user = self.storage.authenticate_user("teacher@school.edu", "teacher123")
-            else:
-                user_map = {
-                    "s_priya": "priya@school.edu",
-                    "s_aarav": "aarav@school.edu",
-                    "s_rohit": "rohit@school.edu",
-                    "s_ananya": "ananya@school.edu",
-                }
-                target_user = user_map.get(student_id, "priya@school.edu")
-                user = self.storage.authenticate_user(target_user, "student123")
-
-            if user:
-                token = self.storage.create_session(user["username"], user["role"])
-                self._send_json({"token": token, "user": user})
-            else:
-                self._send_json({"error": "Demo user not found"}, status=500)
             return
 
         # Auth: Logout
@@ -265,10 +272,15 @@ class LearningDashboardHandler(BaseHTTPRequestHandler):
 
         # Lesson Generation
         if path == "/api/lesson":
-            student_id = body.get("student_id", "s_priya")
+            token = self._get_auth_token()
+            user = self.storage.get_user_by_token(token) if token else None
+            student_id = body.get("student_id") or (user.get("student_id") if user else None) or "student_active"
             concept_id = body.get("concept_id")
             domain = body.get("domain", self.active_domain)
             modality_str = body.get("modality")
+
+            st_name = user.get("name", "Student") if user else "Student"
+            self.storage.get_or_create_student(student_id, st_name, domain)
 
             graph = self.curricula.get(domain) or list(self.curricula.values())[0]
             engine = PersonalizedLearningEngine(self.server_settings, self.storage, graph)
@@ -283,12 +295,17 @@ class LearningDashboardHandler(BaseHTTPRequestHandler):
 
         # Socratic Assessment Evaluation
         if path == "/api/assess":
-            student_id = body.get("student_id", "s_priya")
+            token = self._get_auth_token()
+            user = self.storage.get_user_by_token(token) if token else None
+            student_id = body.get("student_id") or (user.get("student_id") if user else None) or "student_active"
             concept_id = body.get("concept_id")
             item_id = body.get("item_id")
             student_answer = body.get("student_answer", "")
             domain = body.get("domain", self.active_domain)
             latency = float(body.get("latency_sec", 6.0))
+
+            st_name = user.get("name", "Student") if user else "Student"
+            self.storage.get_or_create_student(student_id, st_name, domain)
 
             graph = self.curricula.get(domain) or list(self.curricula.values())[0]
             engine = PersonalizedLearningEngine(self.server_settings, self.storage, graph)
@@ -360,9 +377,6 @@ def run_dashboard_server(
     raw_curricula = get_available_curricula()
     curricula = {dom: ConceptGraph(curr) for dom, curr in raw_curricula.items()}
 
-    # Always ensure default Class 10th accounts exist
-    _seed_demo_classroom(storage)
-
     class CustomServer(ThreadingHTTPServer):
         pass
 
@@ -375,188 +389,4 @@ def run_dashboard_server(
     server = CustomServer((host, port), LearningDashboardHandler)
     return server
 
-
-def _seed_demo_classroom(storage: LearningStorage) -> None:
-    """
-    Seeds Class 10th Mathematics students and teacher accounts.
-    Explicitly aligns with Section 14 (page 6) of the research paper:
-    Priya Sharma exhibits struggle in Quadratic Equations (35%) because of
-    an unresolved prerequisite gap in Polynomials (Zeros & Factorization at 42%).
-    """
-    school = "Delhi Public School & CBSE State Division (Class 10)"
-
-    # 1. Accounts
-    storage.create_user(
-        username="teacher@school.edu",
-        password_clear="teacher123",
-        role="teacher",
-        name="Dr. Sunita Sharma",
-        school_name=school,
-    )
-    storage.create_user(
-        username="priya@school.edu",
-        password_clear="student123",
-        role="student",
-        name="Priya Sharma",
-        student_id="s_priya",
-        school_name=school,
-    )
-    storage.create_user(
-        username="aarav@school.edu",
-        password_clear="student123",
-        role="student",
-        name="Aarav Patel",
-        student_id="s_aarav",
-        school_name=school,
-    )
-    storage.create_user(
-        username="rohit@school.edu",
-        password_clear="student123",
-        role="student",
-        name="Rohit Verma",
-        student_id="s_rohit",
-        school_name=school,
-    )
-    storage.create_user(
-        username="ananya@school.edu",
-        password_clear="student123",
-        role="student",
-        name="Ananya Iyer",
-        student_id="s_ananya",
-        school_name=school,
-    )
-
-    # 2. Student Profiles
-    s1 = storage.get_or_create_student("s_priya", "Priya Sharma", domain="class10_maths")
-    s1.concept_mastery = {
-        "c10_real_numbers": 0.88,
-        "c10_polynomials": 0.42,  # Root-cause prerequisite deficit
-        "c10_linear_equations": 0.72,
-        "c10_quadratic_equations": 0.35,  # Active struggle
-        "c10_arithmetic_progressions": 0.52,
-        "c10_triangles": 0.65,
-        "c10_coordinate_geometry": 0.70,
-        "c10_trigonometry": 0.58,
-        "c10_statistics": 0.82,
-        "c10_probability": 0.85,
-    }
-    s1.active_struggle = StruggleType.KNOWLEDGE_GAP
-    s1.streak_incorrect = 3
-    s1.preferred_modality = LearningModality.WORKED_EXAMPLES
-    storage.save_student(s1)
-
-    s2 = storage.get_or_create_student("s_aarav", "Aarav Patel", domain="class10_maths")
-    s2.concept_mastery = {
-        "c10_real_numbers": 0.95,
-        "c10_polynomials": 0.92,
-        "c10_linear_equations": 0.88,
-        "c10_quadratic_equations": 0.86,
-        "c10_arithmetic_progressions": 0.84,
-        "c10_triangles": 0.78,
-        "c10_coordinate_geometry": 0.82,
-        "c10_trigonometry": 0.85,
-        "c10_applications_trig": 0.80,
-        "c10_circles": 0.79,
-        "c10_surface_areas": 0.75,
-        "c10_statistics": 0.90,
-        "c10_probability": 0.92,
-    }
-    s2.streak_correct = 4
-    s2.preferred_modality = LearningModality.PRACTICE_QUESTIONS
-    storage.save_student(s2)
-
-    s3 = storage.get_or_create_student("s_rohit", "Rohit Verma", domain="class10_maths")
-    s3.concept_mastery = {
-        "c10_real_numbers": 0.82,
-        "c10_polynomials": 0.76,
-        "c10_linear_equations": 0.75,
-        "c10_quadratic_equations": 0.70,
-        "c10_triangles": 0.38,  # Geometric similarity misconception
-        "c10_coordinate_geometry": 0.65,
-        "c10_statistics": 0.80,
-        "c10_probability": 0.78,
-    }
-    s3.active_struggle = StruggleType.KNOWLEDGE_GAP
-    s3.streak_incorrect = 2
-    s3.preferred_modality = LearningModality.VISUAL
-    storage.save_student(s3)
-
-    s4 = storage.get_or_create_student("s_ananya", "Ananya Iyer", domain="class10_maths")
-    s4.concept_mastery = {
-        "c10_real_numbers": 0.98,
-        "c10_polynomials": 0.96,
-        "c10_linear_equations": 0.94,
-        "c10_quadratic_equations": 0.95,
-        "c10_arithmetic_progressions": 0.92,
-        "c10_triangles": 0.90,
-        "c10_coordinate_geometry": 0.92,
-        "c10_trigonometry": 0.96,
-        "c10_applications_trig": 0.94,
-        "c10_circles": 0.91,
-        "c10_surface_areas": 0.88,
-        "c10_statistics": 0.95,
-        "c10_probability": 0.98,
-    }
-    s4.streak_correct = 7
-    s4.preferred_modality = LearningModality.SIMULATION
-    storage.save_student(s4)
-
-    # 3. Explainable AI Diagnostic Alert for Priya Sharma
-    expl_priya = InterventionExplanation(
-        student_id="s_priya",
-        student_name="Priya Sharma",
-        target_concept="Quadratic Equations & Nature of Roots (c10_quadratic_equations)",
-        struggle_type=StruggleType.KNOWLEDGE_GAP,
-        recommended_action="15-minute 1-on-1 review on 'Polynomials: Zeros & Coefficients'",
-        prerequisite_root_cause="Polynomials: Zeros & Coefficients (c10_polynomials)",
-        evidence_points=[
-            "Failed 3 consecutive items on solving ax² + bx + c = 0 by splitting the middle term.",
-            "Prerequisite 'c10_polynomials' mastery is deficient at 42.0% (below 65% threshold).",
-            "Student struggles with identifying factor pairs of ac that sum to b.",
-            "Preferred modality: Worked Examples (demonstrates higher comprehension when shown annotated step-by-step solutions).",
-        ],
-        suggested_teaching_strategy=(
-            "Review factoring quadratic trinomials x² + (a+b)x + ab before resuming quadratic formula derivations."
-        ),
-    )
-    alert_priya = TeacherAlert(
-        alert_id="alert-c10-priya-quadratics",
-        student_id="s_priya",
-        student_name="Priya Sharma",
-        concept_id="c10_quadratic_equations",
-        severity="high",
-        struggle_type=StruggleType.KNOWLEDGE_GAP,
-        message="Priya Sharma struggles with Quadratic Equations due to unmastered prerequisite: Polynomials Zeros & Factoring.",
-        explanation=expl_priya,
-    )
-    storage.save_teacher_alert(alert_priya)
-
-    # 4. Diagnostic Alert for Rohit Verma
-    expl_rohit = InterventionExplanation(
-        student_id="s_rohit",
-        student_name="Rohit Verma",
-        target_concept="Similar Triangles & Basic Proportionality Theorem (c10_triangles)",
-        struggle_type=StruggleType.KNOWLEDGE_GAP,
-        recommended_action="Visual comparison worksheet between SAS Congruence vs SAS Similarity",
-        prerequisite_root_cause="Similar Triangles & Basic Proportionality Theorem (c10_triangles)",
-        evidence_points=[
-            "Assumed that equal corresponding angles require equal side lengths rather than proportional sides.",
-            "Average latency on geometric proofs is 14.5s indicating conceptual hesitation.",
-            "Preferred modality: Visual Proof (absorbs geometric properties significantly faster with color-coded side ratios).",
-        ],
-        suggested_teaching_strategy=(
-            "Use dynamic geometric dilation visualization to show constant angle preservation alongside variable side scale factors."
-        ),
-    )
-    alert_rohit = TeacherAlert(
-        alert_id="alert-c10-rohit-triangles",
-        student_id="s_rohit",
-        student_name="Rohit Verma",
-        concept_id="c10_triangles",
-        severity="medium",
-        struggle_type=StruggleType.KNOWLEDGE_GAP,
-        message="Rohit Verma confuses SAS similarity criterion with congruence in Triangles.",
-        explanation=expl_rohit,
-    )
-    storage.save_teacher_alert(alert_rohit)
 

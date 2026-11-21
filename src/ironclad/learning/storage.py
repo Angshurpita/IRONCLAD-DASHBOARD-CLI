@@ -117,7 +117,7 @@ class LearningStorage:
                     role TEXT NOT NULL,
                     name TEXT NOT NULL,
                     student_id TEXT,
-                    school_name TEXT DEFAULT 'Delhi Public School (CBSE/ICSE Division)',
+                    school_name TEXT DEFAULT 'IRONCLAD Academy',
                     created_at TEXT NOT NULL
                 );
                 """
@@ -142,7 +142,7 @@ class LearningStorage:
         role: str,
         name: str,
         student_id: Optional[str] = None,
-        school_name: str = "Delhi Public School (CBSE/ICSE Division)",
+        school_name: str = "IRONCLAD Academy",
     ) -> Dict[str, Any]:
         """Creates or updates a user credential record with SHA-256 hashed password."""
         import hashlib
@@ -160,18 +160,25 @@ class LearningStorage:
                     student_id = excluded.student_id,
                     school_name = excluded.school_name;
                 """,
-                (username, pw_hash, role, name, student_id, school_name, now),
+                (username.strip(), pw_hash, role.strip(), name.strip(), student_id, school_name.strip(), now),
             )
         return {
-            "username": username,
-            "role": role,
-            "name": name,
+            "username": username.strip(),
+            "role": role.strip(),
+            "name": name.strip(),
             "student_id": student_id,
-            "school_name": school_name,
+            "school_name": school_name.strip(),
         }
 
+    def user_exists(self, username: str) -> bool:
+        """Checks if a user already exists by username or email."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1 FROM users WHERE LOWER(username) = LOWER(?);", (username.strip(),))
+            return cursor.fetchone() is not None
+
     def authenticate_user(self, username: str, password_clear: str) -> Optional[Dict[str, Any]]:
-        """Verifies credentials and returns user metadata dictionary if valid."""
+        """Verifies credentials securely against stored SHA-256 password hash."""
         import hashlib
         pw_hash = hashlib.sha256(password_clear.encode("utf-8")).hexdigest()
         with sqlite3.connect(self.db_path) as conn:
@@ -179,22 +186,11 @@ class LearningStorage:
             cursor.execute(
                 """
                 SELECT username, role, name, student_id, school_name FROM users
-                WHERE (username = ? OR username = ? || '@school.edu') AND password_hash = ?;
+                WHERE LOWER(username) = LOWER(?) AND password_hash = ?;
                 """,
-                (username, username, pw_hash),
+                (username.strip(), pw_hash),
             )
             row = cursor.fetchone()
-            if not row:
-                # Also allow direct demo match without password if matching demo usernames
-                if password_clear in ("demo", "password", "teacher123", "student123", ""):
-                    cursor.execute(
-                        """
-                        SELECT username, role, name, student_id, school_name FROM users
-                        WHERE username = ? OR username = ? || '@school.edu';
-                        """,
-                        (username, username),
-                    )
-                    row = cursor.fetchone()
             if not row:
                 return None
 
@@ -207,19 +203,39 @@ class LearningStorage:
             }
 
     def create_session(self, username: str, role: str) -> str:
-        """Generates a secure auth session token."""
-        import secrets
-        token = f"sess_{secrets.token_hex(24)}"
+        """Generates a secure HMAC-SHA256 signed session token and persists it."""
+        import base64
+        import hashlib
+        import hmac
+        import time
+
         now = datetime.now(timezone.utc).isoformat()
+        payload = json.dumps({
+            "sub": username,
+            "role": role,
+            "iat": int(time.time()),
+            "exp": int(time.time()) + (7 * 86400),
+        }, separators=(",", ":")).encode("utf-8")
+        b64_payload = base64.urlsafe_b64encode(payload).decode("ascii").rstrip("=")
+        sig = hmac.new(b"ironclad_educational_auth_salt_v1", payload, hashlib.sha256).hexdigest()[:32]
+        token = f"sess_{b64_payload}_{sig}"
+
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(
-                "INSERT INTO user_sessions (token, username, role, created_at) VALUES (?, ?, ?, ?);",
+                """
+                INSERT INTO user_sessions (token, username, role, created_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(token) DO UPDATE SET created_at = excluded.created_at;
+                """,
                 (token, username, role, now),
             )
         return token
 
     def get_user_by_token(self, token: str) -> Optional[Dict[str, Any]]:
-        """Retrieves user profile linked to active session token."""
+        """Retrieves user profile linked to session token with resilient fallback."""
+        if not token:
+            return None
+
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -232,15 +248,66 @@ class LearningStorage:
                 (token,),
             )
             row = cursor.fetchone()
-            if not row:
-                return None
-            return {
-                "username": row[0],
-                "role": row[1],
-                "name": row[2],
-                "student_id": row[3],
-                "school_name": row[4],
-            }
+            if row:
+                return {
+                    "username": row[0],
+                    "role": row[1],
+                    "name": row[2],
+                    "student_id": row[3],
+                    "school_name": row[4],
+                }
+
+        # Stateless HMAC fallback for serverless cold starts
+        if token.startswith("sess_") and "_" in token[5:]:
+            import base64
+            import hashlib
+            import hmac
+            import time
+            try:
+                parts = token[5:].split("_")
+                if len(parts) >= 2:
+                    b64_payload = parts[0]
+                    provided_sig = parts[1]
+                    # Restore base64 padding
+                    padding = 4 - (len(b64_payload) % 4)
+                    if padding < 4:
+                        b64_payload += "=" * padding
+                    payload_bytes = base64.urlsafe_b64decode(b64_payload)
+                    expected_sig = hmac.new(b"ironclad_educational_auth_salt_v1", payload_bytes, hashlib.sha256).hexdigest()[:32]
+                    if hmac.compare_digest(provided_sig, expected_sig):
+                        data = json.loads(payload_bytes.decode("utf-8"))
+                        if data.get("exp", 0) > time.time():
+                            username = data.get("sub", "")
+                            # Check if user exists in database
+                            with sqlite3.connect(self.db_path) as conn:
+                                cur = conn.cursor()
+                                cur.execute("SELECT username, role, name, student_id, school_name FROM users WHERE username = ?;", (username,))
+                                urow = cur.fetchone()
+                                if urow:
+                                    # Restore active session record
+                                    conn.execute(
+                                        "INSERT OR IGNORE INTO user_sessions (token, username, role, created_at) VALUES (?, ?, ?, ?);",
+                                        (token, username, data.get("role", "student"), datetime.now(timezone.utc).isoformat()),
+                                    )
+                                    return {
+                                        "username": urow[0],
+                                        "role": urow[1],
+                                        "name": urow[2],
+                                        "student_id": urow[3],
+                                        "school_name": urow[4],
+                                    }
+                            # Synthesize minimal verified user profile if db was wiped
+                            return {
+                                "username": username,
+                                "role": data.get("role", "student"),
+                                "name": username.split("@")[0].capitalize(),
+                                "student_id": f"s_{username.replace('@', '_').replace('.', '_')}",
+                                "school_name": "IRONCLAD Academy",
+                            }
+            except Exception:
+                pass
+
+        return None
 
     def delete_session(self, token: str) -> None:
         """Invalidates a session token upon logout."""

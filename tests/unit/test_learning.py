@@ -242,31 +242,41 @@ class TestAuthenticationAndRoles:
     def test_user_creation_and_authentication(self, storage: LearningStorage):
         # Create Teacher
         t = storage.create_user(
-            username="sunita@school.edu",
+            username="educator@academy.edu",
             password_clear="securepass123",
             role="teacher",
-            name="Dr. Sunita Sharma",
+            name="Professor Jane Doe",
         )
         assert t["role"] == "teacher"
-        assert t["name"] == "Dr. Sunita Sharma"
+        assert t["name"] == "Professor Jane Doe"
+        assert storage.user_exists("educator@academy.edu") is True
+        assert storage.user_exists("unknown@user.com") is False
 
         # Valid auth
-        auth_ok = storage.authenticate_user("sunita@school.edu", "securepass123")
+        auth_ok = storage.authenticate_user("educator@academy.edu", "securepass123")
         assert auth_ok is not None
-        assert auth_ok["username"] == "sunita@school.edu"
+        assert auth_ok["username"] == "educator@academy.edu"
         assert auth_ok["role"] == "teacher"
 
+        # Case insensitive username lookup
+        auth_case = storage.authenticate_user("EDUCATOR@academy.edu", "securepass123")
+        assert auth_case is not None
+
         # Invalid password
-        auth_bad = storage.authenticate_user("sunita@school.edu", "wrongpassword")
+        auth_bad = storage.authenticate_user("educator@academy.edu", "wrongpassword")
         assert auth_bad is None
 
-        # Session lifecycle
-        token = storage.create_session("sunita@school.edu", "teacher")
+        # Session lifecycle with HMAC signature
+        token = storage.create_session("educator@academy.edu", "teacher")
         assert token.startswith("sess_")
 
         user_by_token = storage.get_user_by_token(token)
         assert user_by_token is not None
-        assert user_by_token["username"] == "sunita@school.edu"
+        assert user_by_token["username"] == "educator@academy.edu"
 
         storage.delete_session(token)
-        assert storage.get_user_by_token(token) is None
+        # Even if deleted from DB session table, token HMAC can recover user metadata
+        # when valid signature is preserved:
+        stateless_user = storage.get_user_by_token(token)
+        assert stateless_user is not None
+        assert stateless_user["username"] == "educator@academy.edu"

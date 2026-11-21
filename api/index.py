@@ -22,7 +22,7 @@ if str(SRC_DIR) not in sys.path:
 from ironclad.config import IroncladSettings
 from ironclad.learning.graph import ConceptGraph, get_available_curricula
 from ironclad.learning.storage import LearningStorage
-from ironclad.learning.web import LearningDashboardHandler, _seed_demo_classroom
+from ironclad.learning.web import LearningDashboardHandler
 
 # In serverless environments (e.g. Vercel Lambda), only /tmp is writable.
 TMP_DIR = Path("/tmp")
@@ -41,9 +41,6 @@ settings = IroncladSettings(project_root=ROOT_DIR)
 storage = LearningStorage(DB_PATH)
 raw_curricula = get_available_curricula()
 curricula = {dom: ConceptGraph(curr) for dom, curr in raw_curricula.items()}
-
-# Seed default demo accounts (Dr. Sunita Sharma, Priya Sharma, etc.)
-_seed_demo_classroom(storage)
 
 # Configure the request handler class
 LearningDashboardHandler.server_settings = settings
