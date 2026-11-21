@@ -34,10 +34,58 @@ STATIC_DIR = Path(__file__).parent / "static"
 class LearningDashboardHandler(BaseHTTPRequestHandler):
     """HTTP Request Handler providing REST APIs, Auth layer, and serving UI assets."""
 
-    server_settings: IroncladSettings
-    storage: LearningStorage
-    curricula: Dict[str, ConceptGraph]
+    _server_settings_val: Any = None
+    _storage_val: Any = None
+    _curricula_val: Any = None
     active_domain: str = "class10_maths"
+
+    @property
+    def storage(self) -> Any:
+        if self._storage_val is None:
+            if getattr(self.__class__, "_storage_val", None) is not None:
+                return self.__class__._storage_val
+            from ironclad.learning.storage import LearningStorage
+            db_path = Path("/tmp/ironclad_learning.db")
+            self.__class__._storage_val = LearningStorage(db_path)
+        return self.__class__._storage_val
+
+    @storage.setter
+    def storage(self, value: Any) -> None:
+        self.__class__._storage_val = value
+
+    @property
+    def curricula(self) -> Dict[str, Any]:
+        if self._curricula_val is None:
+            if getattr(self.__class__, "_curricula_val", None) is not None:
+                return self.__class__._curricula_val
+            try:
+                from ironclad.learning.graph import ConceptGraph, get_available_curricula
+                raw = get_available_curricula()
+                self.__class__._curricula_val = {dom: ConceptGraph(curr) for dom, curr in raw.items()}
+            except Exception:
+                self.__class__._curricula_val = {}
+        return self.__class__._curricula_val
+
+    @curricula.setter
+    def curricula(self, value: Any) -> None:
+        self.__class__._curricula_val = value
+
+    @property
+    def server_settings(self) -> Any:
+        if self._server_settings_val is None:
+            if getattr(self.__class__, "_server_settings_val", None) is not None:
+                return self.__class__._server_settings_val
+            try:
+                from ironclad.config import IroncladSettings
+                root = Path(__file__).resolve().parent.parent.parent.parent
+                self.__class__._server_settings_val = IroncladSettings(project_root=root)
+            except Exception:
+                self.__class__._server_settings_val = None
+        return self.__class__._server_settings_val
+
+    @server_settings.setter
+    def server_settings(self, value: Any) -> None:
+        self.__class__._server_settings_val = value
 
     def log_message(self, format: str, *args: Any) -> None:
         """Quiet default server logging."""
@@ -107,6 +155,15 @@ class LearningDashboardHandler(BaseHTTPRequestHandler):
         return None
 
     def do_GET(self) -> None:
+        try:
+            self._handle_get()
+        except Exception as e:
+            import traceback
+            tb = traceback.format_exc()
+            logger.error(f"Error in do_GET: {tb}")
+            self._send_json({"error": f"Server processing error: {str(e)}", "detail": tb[-400:]}, status=500)
+
+    def _handle_get(self) -> None:
         path = self._get_effective_path()
         query = self._get_effective_query()
 
@@ -208,6 +265,15 @@ class LearningDashboardHandler(BaseHTTPRequestHandler):
                 self._serve_file(STATIC_DIR / "index.html", "text/html")
 
     def do_POST(self) -> None:
+        try:
+            self._handle_post()
+        except Exception as e:
+            import traceback
+            tb = traceback.format_exc()
+            logger.error(f"Error in do_POST: {tb}")
+            self._send_json({"error": f"Server processing error: {str(e)}", "detail": tb[-400:]}, status=500)
+
+    def _handle_post(self) -> None:
         path = self._get_effective_path()
         body = self._read_json_body()
 
