@@ -748,11 +748,20 @@ async function generateStudentLesson() {
     });
 
     const lesson = await res.json();
+
+    if (!res.ok || lesson.error) {
+      throw new Error(lesson.error || `Server returned ${res.status}`);
+    }
+
     state.currentLesson = lesson;
 
-    studentLessonTitle.textContent = lesson.concept_name;
-    const cleanModality = (lesson.modality || state.activeModality).replace(/_/g, ' ').toUpperCase();
+    studentLessonTitle.textContent = lesson.concept_name || 'Lesson';
+    const cleanModality = (lesson.modality || state.activeModality || 'worked_examples').replace(/_/g, ' ').toUpperCase();
     studentLessonTag.textContent = `NCERT SEQUENCE &bull; ${cleanModality}`;
+
+    const explanationHtml = (lesson.explanation || 'No explanation available.').replace(/\n\n/g, '<br><br>');
+    const workedExampleHtml = lesson.worked_example || 'No worked example available.';
+    const guidedExerciseHtml = lesson.guided_exercise || 'No guided exercise available.';
 
     studentLessonBody.innerHTML = `
       ${
@@ -763,21 +772,21 @@ async function generateStudentLesson() {
           : ''
       }
       <div style="margin-bottom: 1.25rem;">
-        ${lesson.explanation.replace(/\n\n/g, '<br><br>')}
+        ${explanationHtml}
       </div>
 
       <div class="lesson-box-section">
         <div class="lesson-box-title">Step-by-Step Worked Example</div>
-        <div style="white-space: pre-wrap; font-size: 0.9rem; color: #1e293b;">${lesson.worked_example}</div>
+        <div style="white-space: pre-wrap; font-size: 0.9rem; color: #1e293b;">${workedExampleHtml}</div>
       </div>
 
       <div class="lesson-box-section guided">
         <div class="lesson-box-title">Guided Socratic Practice</div>
-        <div style="font-size: 0.9rem; color: #1e293b;">${lesson.guided_exercise}</div>
+        <div style="font-size: 0.9rem; color: #1e293b;">${guidedExerciseHtml}</div>
       </div>
     `;
 
-    renderAssessmentItem(lesson.assessment_items);
+    renderAssessmentItem(lesson.assessment_items || []);
   } catch (err) {
     console.error('Failed to generate lesson:', err);
     studentLessonBody.innerHTML = `<p style="color: var(--rose);">Could not synthesize lesson: ${err.message}</p>`;

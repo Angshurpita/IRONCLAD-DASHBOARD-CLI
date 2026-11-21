@@ -390,6 +390,10 @@ class LearningDashboardHandler(BaseHTTPRequestHandler):
             domain = body.get("domain", self.active_domain)
             modality_str = body.get("modality")
 
+            if not concept_id:
+                self._send_json({"error": "Missing required field: concept_id"}, status=400)
+                return
+
             st_name = user.get("name", "Student") if user else "Student"
             self.storage.get_or_create_student(student_id, st_name, domain)
 
@@ -401,7 +405,9 @@ class LearningDashboardHandler(BaseHTTPRequestHandler):
                 plan = engine.create_lesson_plan(student_id, concept_id, requested_modality=modality)
                 self._send_json(plan.model_dump())
             except Exception as e:
-                self._send_json({"error": str(e)}, status=400)
+                import traceback
+                logger.error(f"Lesson generation failed: {traceback.format_exc()}")
+                self._send_json({"error": str(e)}, status=500)
             return
 
         # Socratic Assessment Evaluation
