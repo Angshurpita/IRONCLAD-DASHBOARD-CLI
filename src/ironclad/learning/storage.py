@@ -24,6 +24,16 @@ from ironclad.learning.models import (
     TeacherAlert,
 )
 
+def _safe_struggle_type(val):
+    """Safely parse a StruggleType, falling back to KNOWLEDGE_GAP for invalid values."""
+    if not val:
+        return StruggleType.KNOWLEDGE_GAP
+    try:
+        return StruggleType(val)
+    except ValueError:
+        return StruggleType.KNOWLEDGE_GAP
+
+
 logger = logging.getLogger("ironclad.learning.storage")
 
 # In-memory user and session registry fallback for serverless cold-starts
@@ -201,12 +211,12 @@ class LearningStorage:
                         (
                             "s_student", "Alex Student", "class10_maths", "standard", "worked_examples",
                             json.dumps({"worked_examples": 0.40, "socratic_dialogue": 0.25, "visual_diagrams": 0.20, "formal_proof": 0.15}),
-                            14, 20, 16, 7.8, "upstream_prerequisite_gap", 4, 0, now, now
+                            14, 20, 16, 7.8, "knowledge_gap", 4, 0, now, now
                         ),
                         (
                             "s_rohan", "Rohan Verma", "class10_maths", "thorough", "visual_diagrams",
                             json.dumps({"worked_examples": 0.20, "socratic_dialogue": 0.20, "visual_diagrams": 0.45, "formal_proof": 0.15}),
-                            9, 15, 10, 11.2, "calculation_carelessness", 1, 1, now, now
+                            9, 15, 10, 11.2, "learning_behavior", 1, 1, now, now
                         ),
                         (
                             "s_priya", "Priya Sharma", "class10_maths", "fast", "socratic_dialogue",
@@ -251,7 +261,7 @@ class LearningStorage:
                         "student_name": "Alex Student",
                         "target_concept": "Geometrical Meaning of Zeroes of a Polynomial",
                         "concept_id": "c10_polynomials_zeroes_geometry",
-                        "struggle_type": "upstream_prerequisite_gap",
+                        "struggle_type": "knowledge_gap",
                         "diagnosed_gap_concept": "Linear Equations Graphical Representation",
                         "explanation": "Alex exhibits repeated errors when interpreting parabola x-intercepts on the Cartesian plane. The diagnostic trace shows a prerequisite deficiency in mapping polynomial zeroes to coordinate intersections from earlier modules.",
                         "recommended_action": "Targeted remediation session focusing on graphical coordinate intercepts before continuing to higher degree polynomial zeroes.",
@@ -268,7 +278,7 @@ class LearningStorage:
                             "s_student",
                             "c10_polynomials_zeroes_geometry",
                             "high",
-                            "upstream_prerequisite_gap",
+                            "knowledge_gap",
                             "Persistent difficulty interpreting geometrical zeroes of polynomials. Upstream prerequisite deficiency detected.",
                             expl_json,
                             now,
@@ -622,7 +632,10 @@ class LearningStorage:
             mastery = {r[0]: float(r[1]) for r in cursor.fetchall()}
 
             modality_weights = json.loads(row[5]) if row[5] else {}
-            struggle = StruggleType(row[10]) if row[10] else None
+            try:
+                struggle = StruggleType(row[10]) if row[10] else None
+            except ValueError:
+                struggle = None
 
             return LearnerProfile(
                 student_id=row[0],
@@ -799,7 +812,7 @@ class LearningStorage:
                     student_name=student_name,
                     concept_id=r[2],
                     severity=r[3],
-                    struggle_type=StruggleType(r[4]),
+                    struggle_type=_safe_struggle_type(r[4]),
                     message=r[5],
                     explanation=expl,
                     timestamp=r[7],
