@@ -343,6 +343,15 @@ function init3DBackground() {
 // ============================================================================
 // 4. AUTHENTICATION & SESSION MANAGEMENT
 // ============================================================================
+function getAuthHeaders(extra = {}) {
+  const headers = { ...extra };
+  if (state.token) {
+    headers['Authorization'] = `Bearer ${state.token}`;
+    headers['X-Auth-Token'] = state.token;
+  }
+  return headers;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   init3DBackground();
   setupEventListeners();
@@ -357,6 +366,28 @@ function setupEventListeners() {
   // Role Selector Toggle
   roleStudentToggle.addEventListener('click', () => setAuthRole('student'));
   roleTeacherToggle.addEventListener('click', () => setAuthRole('teacher'));
+
+  // 1-Click Demo Evaluation Account Buttons
+  const demoStudentBtn = document.getElementById('demoStudentBtn');
+  const demoTeacherBtn = document.getElementById('demoTeacherBtn');
+  if (demoStudentBtn) {
+    demoStudentBtn.addEventListener('click', () => {
+      switchAuthMode('login');
+      setAuthRole('student');
+      authUsername.value = 'student@academy.edu';
+      authPassword.value = 'student123';
+      hideAuthAlert();
+    });
+  }
+  if (demoTeacherBtn) {
+    demoTeacherBtn.addEventListener('click', () => {
+      switchAuthMode('login');
+      setAuthRole('teacher');
+      authUsername.value = 'educator@academy.edu';
+      authPassword.value = 'teacher123';
+      hideAuthAlert();
+    });
+  }
 
   // Form Submit
   authForm.addEventListener('submit', handleAuthSubmit);
@@ -475,7 +506,8 @@ async function handleAuthSubmit() {
         }),
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get('content-type') || '';
+      const data = contentType.includes('application/json') ? await res.json() : {};
       if (!res.ok) {
         throw new Error(data.error || 'Registration failed.');
       }
@@ -496,7 +528,8 @@ async function handleAuthSubmit() {
         }),
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get('content-type') || '';
+      const data = contentType.includes('application/json') ? await res.json() : {};
       if (!res.ok) {
         throw new Error(data.error || 'Invalid username or password.');
       }
@@ -522,13 +555,19 @@ async function checkExistingSession() {
 
   try {
     const res = await fetch('/api/auth/me', {
-      headers: { Authorization: `Bearer ${state.token}` },
+      headers: getAuthHeaders(),
     });
     if (!res.ok) throw new Error('Session expired');
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error('Invalid server response');
+    }
     const data = await res.json();
+    if (!data.user) throw new Error('Invalid user payload');
     state.user = data.user;
     routeAuthenticatedUser();
   } catch (err) {
+    console.warn('Session check:', err.message);
     state.token = null;
     state.user = null;
     localStorage.removeItem('ironclad_token');
@@ -541,7 +580,7 @@ async function handleSignOut() {
     try {
       await fetch('/api/auth/logout', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${state.token}` },
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       });
     } catch (e) {}
   }
@@ -604,7 +643,9 @@ function routeAuthenticatedUser() {
 // ============================================================================
 async function loadCurriculumData() {
   try {
-    const res = await fetch(`/api/curriculum?domain=${state.domain}`);
+    const res = await fetch(`/api/curriculum?domain=${state.domain}`, {
+      headers: getAuthHeaders(),
+    });
     const data = await res.json();
     state.nodes = data.nodes || [];
     state.nodeMap = {};
@@ -638,7 +679,9 @@ async function updateStudentTopicMasteryDisplay() {
   const studentId = state.user?.student_id || `s_${state.user?.username}`;
 
   try {
-    const res = await fetch(`/api/student/${studentId}`);
+    const res = await fetch(`/api/student/${studentId}`, {
+      headers: getAuthHeaders(),
+    });
     if (res.ok) {
       const student = await res.json();
       const mastery = student.concept_mastery ? student.concept_mastery[conceptId] : null;
@@ -671,10 +714,7 @@ async function updateStudentModalityPreference(modality) {
   try {
     await fetch('/api/student/preference', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${state.token}`,
-      },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ student_id: studentId, modality }),
     });
   } catch (err) {
@@ -698,10 +738,7 @@ async function generateStudentLesson() {
   try {
     const res = await fetch('/api/lesson', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${state.token}`,
-      },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         student_id: studentId,
         concept_id: conceptId,
@@ -822,10 +859,7 @@ async function submitStudentAssessment() {
   try {
     const res = await fetch('/api/assess', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${state.token}`,
-      },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         student_id: studentId,
         concept_id: conceptId,
@@ -879,7 +913,7 @@ async function submitStudentAssessment() {
 async function loadTeacherAnalytics() {
   try {
     const summaryRes = await fetch(`/api/class-summary?domain=${state.domain}`, {
-      headers: { Authorization: `Bearer ${state.token}` },
+      headers: getAuthHeaders(),
     });
     const summary = await summaryRes.json();
 
@@ -892,7 +926,7 @@ async function loadTeacherAnalytics() {
     renderTeacherDAG();
 
     const studentsRes = await fetch(`/api/students?domain=${state.domain}`, {
-      headers: { Authorization: `Bearer ${state.token}` },
+      headers: getAuthHeaders(),
     });
     const students = await studentsRes.json();
     renderTeacherStudentsTable(students);
@@ -945,10 +979,7 @@ window.resolveAlert = async function (alertId) {
   try {
     await fetch('/api/resolve-alert', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${state.token}`,
-      },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ alert_id: alertId }),
     });
     loadTeacherAnalytics();
@@ -960,7 +991,7 @@ window.resolveAlert = async function (alertId) {
 window.openDiagnosticModal = async function (studentId, conceptId) {
   try {
     const res = await fetch(`/api/explain/${studentId}?domain=${state.domain}&concept=${conceptId || ''}`, {
-      headers: { Authorization: `Bearer ${state.token}` },
+      headers: getAuthHeaders(),
     });
     const expl = await res.json();
 

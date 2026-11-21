@@ -46,23 +46,68 @@ class LearningDashboardHandler(BaseHTTPRequestHandler):
     def do_HEAD(self) -> None:
         self.do_GET()
 
-    def _get_auth_token(self) -> Optional[str]:
-        auth_hdr = self.headers.get("Authorization", "")
-        if auth_hdr.startswith("Bearer "):
-            return auth_hdr[7:].strip()
-        if "X-Auth-Token" in self.headers:
-            return self.headers.get("X-Auth-Token", "").strip()
+    def _get_effective_path(self) -> str:
+        """Resolves request path normalizing across local execution and Vercel serverless rewrites."""
         parsed = urlparse(self.path)
         query = parse_qs(parsed.query)
+
+        # 1. Rewritten path query param (from vercel.json: /api/index.py?path=/api/...)
+        if "path" in query and query["path"]:
+            p = query["path"][0]
+            if p:
+                return urlparse(p).path
+
+        # 2. Check HTTP proxy / edge headers
+        for hdr in ("x-forwarded-uri", "x-real-path", "x-matched-path", "x-vercel-matched-path"):
+            val = self.headers.get(hdr)
+            if val:
+                return urlparse(val).path
+
+        # 3. Default to self.path
+        return parsed.path
+
+    def _get_effective_query(self) -> Dict[str, List[str]]:
+        """Extracts and merges query parameters from self.path and forwarded proxy URIs."""
+        parsed = urlparse(self.path)
+        query = parse_qs(parsed.query)
+
+        # Merge if rewritten path contained query string
+        if "path" in query and query["path"]:
+            p = query["path"][0]
+            if "?" in p:
+                nested = parse_qs(urlparse(p).query)
+                for k, v in nested.items():
+                    if k not in query:
+                        query[k] = v
+
+        # Check forwarded headers
+        for hdr in ("x-forwarded-uri", "x-real-path"):
+            val = self.headers.get(hdr)
+            if val and "?" in val:
+                fquery = parse_qs(urlparse(val).query)
+                for k, v in fquery.items():
+                    if k not in query:
+                        query[k] = v
+
+        return query
+
+    def _get_auth_token(self) -> Optional[str]:
+        """Extracts auth token supporting HTTP/1.1, HTTP/2 lowercasing, and custom headers."""
+        auth_hdr = self.headers.get("Authorization") or self.headers.get("authorization") or ""
+        if auth_hdr.startswith("Bearer "):
+            return auth_hdr[7:].strip()
+        x_token = self.headers.get("X-Auth-Token") or self.headers.get("x-auth-token") or ""
+        if x_token:
+            return x_token.strip()
+        query = self._get_effective_query()
         token_list = query.get("token")
         if token_list:
             return token_list[0].strip()
         return None
 
     def do_GET(self) -> None:
-        parsed_url = urlparse(self.path)
-        path = parsed_url.path
-        query = parse_qs(parsed_url.query)
+        path = self._get_effective_path()
+        query = self._get_effective_query()
 
         # 1. Auth Endpoints
         if path == "/api/auth/me":
@@ -162,8 +207,7 @@ class LearningDashboardHandler(BaseHTTPRequestHandler):
                 self._serve_file(STATIC_DIR / "index.html", "text/html")
 
     def do_POST(self) -> None:
-        parsed_url = urlparse(self.path)
-        path = parsed_url.path
+        path = self._get_effective_path()
         body = self._read_json_body()
 
         # Auth: Register
@@ -326,12 +370,17 @@ class LearningDashboardHandler(BaseHTTPRequestHandler):
         self._send_json({"error": "Not Found"}, status=404)
 
     def _read_json_body(self) -> Dict[str, Any]:
-        content_length = int(self.headers.get("Content-Length", 0))
+        cl_hdr = self.headers.get("Content-Length") or self.headers.get("content-length") or "0"
+        try:
+            content_length = int(cl_hdr)
+        except (ValueError, TypeError):
+            content_length = 0
         if content_length > 0:
-            raw = self.rfile.read(content_length).decode("utf-8")
             try:
+                raw = self.rfile.read(content_length).decode("utf-8")
                 return json.loads(raw)
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Error parsing JSON request body: {e}")
                 return {}
         return {}
 
@@ -341,16 +390,16 @@ class LearningDashboardHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(payload)))
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Auth-Token")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, authorization, X-Auth-Token, x-auth-token, x-forwarded-uri")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD")
         self.end_headers()
         self.wfile.write(payload)
 
     def do_OPTIONS(self) -> None:
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Auth-Token")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, authorization, X-Auth-Token, x-auth-token, x-forwarded-uri")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD")
         self.end_headers()
 
     def _serve_file(self, file_path: Path, content_type: str) -> None:

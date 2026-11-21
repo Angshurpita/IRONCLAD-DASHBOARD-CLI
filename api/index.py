@@ -60,12 +60,11 @@ class handler(LearningDashboardHandler):
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Auth-Token")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, authorization, X-Auth-Token, x-auth-token, x-forwarded-uri")
         self.end_headers()
 
     def do_GET(self) -> None:
-        parsed = urlparse(self.path)
-        path = parsed.path
+        path = self._get_effective_path()
 
         # Health & info endpoint
         if path in ("/api", "/api/", "/api/health"):

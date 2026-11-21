@@ -8,6 +8,7 @@ Maintains tables for:
 """
 
 import json
+import logging
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -22,6 +23,13 @@ from ironclad.learning.models import (
     StruggleType,
     TeacherAlert,
 )
+
+logger = logging.getLogger("ironclad.learning.storage")
+
+# In-memory user and session registry fallback for serverless cold-starts
+_MEMORY_USERS: Dict[str, Dict[str, Any]] = {}
+_MEMORY_SESSIONS: Dict[str, Dict[str, Any]] = {}
+
 
 
 class LearningStorage:
@@ -135,6 +143,137 @@ class LearningStorage:
                 """
             )
 
+        self._seed_default_data()
+
+    def _seed_default_data(self) -> None:
+        """Seeds default evaluation accounts, learners, and diagnostic alerts for immediate evaluation."""
+        import hashlib
+        demo_student_pw = hashlib.sha256(b"student123").hexdigest()
+        demo_teacher_pw = hashlib.sha256(b"teacher123").hexdigest()
+        now = datetime.now(timezone.utc).isoformat()
+
+        # In-memory registry fallback for cold-starts
+        _MEMORY_USERS["student@academy.edu"] = {
+            "username": "student@academy.edu",
+            "password_hash": demo_student_pw,
+            "role": "student",
+            "name": "Alex Student",
+            "student_id": "s_student",
+            "school_name": "IRONCLAD Academy",
+            "created_at": now,
+        }
+        _MEMORY_USERS["educator@academy.edu"] = {
+            "username": "educator@academy.edu",
+            "password_hash": demo_teacher_pw,
+            "role": "teacher",
+            "name": "Academic Lead",
+            "student_id": None,
+            "school_name": "IRONCLAD Academy",
+            "created_at": now,
+        }
+
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                # Seed default users
+                conn.execute(
+                    """
+                    INSERT OR IGNORE INTO users (username, password_hash, role, name, student_id, school_name, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?);
+                    """,
+                    ("student@academy.edu", demo_student_pw, "student", "Alex Student", "s_student", "IRONCLAD Academy", now),
+                )
+                conn.execute(
+                    """
+                    INSERT OR IGNORE INTO users (username, password_hash, role, name, student_id, school_name, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?);
+                    """,
+                    ("educator@academy.edu", demo_teacher_pw, "teacher", "Academic Lead", None, "IRONCLAD Academy", now),
+                )
+
+                # Check if students exist
+                cur = conn.cursor()
+                cur.execute("SELECT COUNT(*) FROM students;")
+                if cur.fetchone()[0] == 0:
+                    default_students = [
+                        (
+                            "s_student", "Alex Student", "class10_maths", "standard", "worked_examples",
+                            json.dumps({"worked_examples": 0.40, "socratic_dialogue": 0.25, "visual_diagrams": 0.20, "formal_proof": 0.15}),
+                            14, 20, 16, 7.8, "upstream_prerequisite_gap", 4, 0, now, now
+                        ),
+                        (
+                            "s_rohan", "Rohan Verma", "class10_maths", "thorough", "visual_diagrams",
+                            json.dumps({"worked_examples": 0.20, "socratic_dialogue": 0.20, "visual_diagrams": 0.45, "formal_proof": 0.15}),
+                            9, 15, 10, 11.2, "calculation_carelessness", 1, 1, now, now
+                        ),
+                        (
+                            "s_priya", "Priya Sharma", "class10_maths", "fast", "socratic_dialogue",
+                            json.dumps({"worked_examples": 0.15, "socratic_dialogue": 0.45, "visual_diagrams": 0.25, "formal_proof": 0.15}),
+                            18, 26, 24, 5.4, None, 6, 0, now, now
+                        ),
+                    ]
+                    conn.executemany(
+                        """
+                        INSERT INTO students (
+                            student_id, name, domain, learning_pace, preferred_modality,
+                            modality_weights, total_sessions, total_assessments, correct_assessments,
+                            average_latency_sec, active_struggle, streak_correct, streak_incorrect,
+                            created_at, updated_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                        """,
+                        default_students,
+                    )
+
+                    masteries = [
+                        ("s_student", "c10_real_numbers_euclid", 0.90, 4, now),
+                        ("s_student", "c10_real_numbers_fundamental_arithmetic", 0.85, 3, now),
+                        ("s_student", "c10_real_numbers_irrational", 0.72, 3, now),
+                        ("s_student", "c10_polynomials_zeroes_geometry", 0.38, 5, now),
+                        ("s_student", "c10_quadratic_equations_factorisation", 0.65, 2, now),
+                        ("s_rohan", "c10_real_numbers_euclid", 0.70, 3, now),
+                        ("s_rohan", "c10_linear_equations_graphical", 0.45, 4, now),
+                        ("s_priya", "c10_real_numbers_euclid", 0.96, 5, now),
+                        ("s_priya", "c10_polynomials_zeroes_geometry", 0.92, 4, now),
+                        ("s_priya", "c10_triangles_similarity_criteria", 0.88, 3, now),
+                    ]
+                    conn.executemany(
+                        """
+                        INSERT INTO student_mastery (student_id, concept_id, mastery_score, attempts_count, last_tested_at)
+                        VALUES (?, ?, ?, ?, ?);
+                        """,
+                        masteries,
+                    )
+
+                    expl_json = json.dumps({
+                        "student_id": "s_student",
+                        "student_name": "Alex Student",
+                        "target_concept": "Geometrical Meaning of Zeroes of a Polynomial",
+                        "concept_id": "c10_polynomials_zeroes_geometry",
+                        "struggle_type": "upstream_prerequisite_gap",
+                        "diagnosed_gap_concept": "Linear Equations Graphical Representation",
+                        "explanation": "Alex exhibits repeated errors when interpreting parabola x-intercepts on the Cartesian plane. The diagnostic trace shows a prerequisite deficiency in mapping polynomial zeroes to coordinate intersections from earlier modules.",
+                        "recommended_action": "Targeted remediation session focusing on graphical coordinate intercepts before continuing to higher degree polynomial zeroes.",
+                        "confidence_score": 0.89,
+                    })
+                    conn.execute(
+                        """
+                        INSERT OR IGNORE INTO teacher_alerts (
+                            alert_id, student_id, concept_id, severity, struggle_type, message, explanation_json, resolved, timestamp
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?);
+                        """,
+                        (
+                            "alert_s_student_poly",
+                            "s_student",
+                            "c10_polynomials_zeroes_geometry",
+                            "high",
+                            "upstream_prerequisite_gap",
+                            "Persistent difficulty interpreting geometrical zeroes of polynomials. Upstream prerequisite deficiency detected.",
+                            expl_json,
+                            now,
+                        ),
+                    )
+        except Exception as e:
+            logger.warning(f"Seed default data warning: {e}")
+
     def create_user(
         self,
         username: str,
@@ -148,21 +287,7 @@ class LearningStorage:
         import hashlib
         pw_hash = hashlib.sha256(password_clear.encode("utf-8")).hexdigest()
         now = datetime.now(timezone.utc).isoformat()
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute(
-                """
-                INSERT INTO users (username, password_hash, role, name, student_id, school_name, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(username) DO UPDATE SET
-                    password_hash = excluded.password_hash,
-                    role = excluded.role,
-                    name = excluded.name,
-                    student_id = excluded.student_id,
-                    school_name = excluded.school_name;
-                """,
-                (username.strip(), pw_hash, role.strip(), name.strip(), student_id, school_name.strip(), now),
-            )
-        return {
+        u_obj = {
             "username": username.strip(),
             "role": role.strip(),
             "name": name.strip(),
@@ -170,37 +295,140 @@ class LearningStorage:
             "school_name": school_name.strip(),
         }
 
+        # Store in memory registry for resilience across serverless cold-starts
+        _MEMORY_USERS[username.strip().lower()] = {
+            **u_obj,
+            "password_hash": pw_hash,
+            "created_at": now,
+        }
+
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute(
+                    """
+                    INSERT INTO users (username, password_hash, role, name, student_id, school_name, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(username) DO UPDATE SET
+                        password_hash = excluded.password_hash,
+                        role = excluded.role,
+                        name = excluded.name,
+                        student_id = excluded.student_id,
+                        school_name = excluded.school_name;
+                    """,
+                    (username.strip(), pw_hash, role.strip(), name.strip(), student_id, school_name.strip(), now),
+                )
+        except Exception as e:
+            logger.warning(f"Could not persist user to SQLite: {e}")
+
+        return u_obj
+
     def user_exists(self, username: str) -> bool:
         """Checks if a user already exists by username or email."""
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1 FROM users WHERE LOWER(username) = LOWER(?);", (username.strip(),))
-            return cursor.fetchone() is not None
+        norm = username.strip().lower()
+        if norm in _MEMORY_USERS:
+            return True
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT 1 FROM users WHERE LOWER(username) = LOWER(?);", (username.strip(),))
+                return cursor.fetchone() is not None
+        except Exception:
+            return False
+
+    def get_user(self, username: str) -> Optional[Dict[str, Any]]:
+        """Retrieves user profile by username."""
+        norm = username.strip().lower()
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT username, role, name, student_id, school_name FROM users WHERE LOWER(username) = LOWER(?);",
+                    (username.strip(),),
+                )
+                row = cursor.fetchone()
+                if row:
+                    return {
+                        "username": row[0],
+                        "role": row[1],
+                        "name": row[2],
+                        "student_id": row[3],
+                        "school_name": row[4],
+                    }
+        except Exception:
+            pass
+
+        mem_user = _MEMORY_USERS.get(norm)
+        if mem_user:
+            return {
+                "username": mem_user["username"],
+                "role": mem_user["role"],
+                "name": mem_user["name"],
+                "student_id": mem_user["student_id"],
+                "school_name": mem_user["school_name"],
+            }
+        return None
 
     def authenticate_user(self, username: str, password_clear: str) -> Optional[Dict[str, Any]]:
         """Verifies credentials securely against stored SHA-256 password hash."""
         import hashlib
         pw_hash = hashlib.sha256(password_clear.encode("utf-8")).hexdigest()
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                """
-                SELECT username, role, name, student_id, school_name FROM users
-                WHERE LOWER(username) = LOWER(?) AND password_hash = ?;
-                """,
-                (username.strip(), pw_hash),
-            )
-            row = cursor.fetchone()
-            if not row:
-                return None
+        norm = username.strip().lower()
 
+        # 1. Try SQLite
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    SELECT username, role, name, student_id, school_name FROM users
+                    WHERE LOWER(username) = LOWER(?) AND password_hash = ?;
+                    """,
+                    (username.strip(), pw_hash),
+                )
+                row = cursor.fetchone()
+                if row:
+                    return {
+                        "username": row[0],
+                        "role": row[1],
+                        "name": row[2],
+                        "student_id": row[3],
+                        "school_name": row[4],
+                    }
+        except Exception as e:
+            logger.warning(f"Database query error in authenticate_user: {e}")
+
+        # 2. Try Memory Cache
+        mem_user = _MEMORY_USERS.get(norm)
+        if mem_user and mem_user.get("password_hash") == pw_hash:
+            # Re-seed into SQLite if connection is alive
+            try:
+                with sqlite3.connect(self.db_path) as conn:
+                    conn.execute(
+                        """
+                        INSERT OR REPLACE INTO users (username, password_hash, role, name, student_id, school_name, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?);
+                        """,
+                        (
+                            mem_user["username"],
+                            mem_user["password_hash"],
+                            mem_user["role"],
+                            mem_user["name"],
+                            mem_user["student_id"],
+                            mem_user["school_name"],
+                            mem_user.get("created_at", datetime.now(timezone.utc).isoformat()),
+                        ),
+                    )
+            except Exception:
+                pass
             return {
-                "username": row[0],
-                "role": row[1],
-                "name": row[2],
-                "student_id": row[3],
-                "school_name": row[4],
+                "username": mem_user["username"],
+                "role": mem_user["role"],
+                "name": mem_user["name"],
+                "student_id": mem_user["student_id"],
+                "school_name": mem_user["school_name"],
             }
+
+        return None
 
     def create_session(self, username: str, role: str) -> str:
         """Generates a secure HMAC-SHA256 signed session token and persists it."""
@@ -210,9 +438,17 @@ class LearningStorage:
         import time
 
         now = datetime.now(timezone.utc).isoformat()
+        user = self.get_user(username)
+        name = user.get("name", username) if user else username
+        student_id = user.get("student_id") if user else None
+        school_name = user.get("school_name", "IRONCLAD Academy") if user else "IRONCLAD Academy"
+
         payload = json.dumps({
             "sub": username,
             "role": role,
+            "name": name,
+            "student_id": student_id,
+            "school_name": school_name,
             "iat": int(time.time()),
             "exp": int(time.time()) + (7 * 86400),
         }, separators=(",", ":")).encode("utf-8")
@@ -220,15 +456,29 @@ class LearningStorage:
         sig = hmac.new(b"ironclad_educational_auth_salt_v1", payload, hashlib.sha256).hexdigest()[:32]
         token = f"sess_{b64_payload}_{sig}"
 
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute(
-                """
-                INSERT INTO user_sessions (token, username, role, created_at)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT(token) DO UPDATE SET created_at = excluded.created_at;
-                """,
-                (token, username, role, now),
-            )
+        _MEMORY_SESSIONS[token] = {
+            "token": token,
+            "username": username,
+            "role": role,
+            "name": name,
+            "student_id": student_id,
+            "school_name": school_name,
+            "created_at": now,
+        }
+
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute(
+                    """
+                    INSERT INTO user_sessions (token, username, role, created_at)
+                    VALUES (?, ?, ?, ?)
+                    ON CONFLICT(token) DO UPDATE SET created_at = excluded.created_at;
+                    """,
+                    (token, username, role, now),
+                )
+        except Exception as e:
+            logger.warning(f"Could not persist session to SQLite: {e}")
+
         return token
 
     def get_user_by_token(self, token: str) -> Optional[Dict[str, Any]]:
@@ -236,28 +486,43 @@ class LearningStorage:
         if not token:
             return None
 
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                """
-                SELECT u.username, u.role, u.name, u.student_id, u.school_name
-                FROM user_sessions s
-                JOIN users u ON s.username = u.username
-                WHERE s.token = ?;
-                """,
-                (token,),
-            )
-            row = cursor.fetchone()
-            if row:
-                return {
-                    "username": row[0],
-                    "role": row[1],
-                    "name": row[2],
-                    "student_id": row[3],
-                    "school_name": row[4],
-                }
+        # 1. Try SQLite
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    SELECT u.username, u.role, u.name, u.student_id, u.school_name
+                    FROM user_sessions s
+                    JOIN users u ON s.username = u.username
+                    WHERE s.token = ?;
+                    """,
+                    (token,),
+                )
+                row = cursor.fetchone()
+                if row:
+                    return {
+                        "username": row[0],
+                        "role": row[1],
+                        "name": row[2],
+                        "student_id": row[3],
+                        "school_name": row[4],
+                    }
+        except Exception:
+            pass
 
-        # Stateless HMAC fallback for serverless cold starts
+        # 2. Try in-memory sessions cache
+        if token in _MEMORY_SESSIONS:
+            sess = _MEMORY_SESSIONS[token]
+            return {
+                "username": sess["username"],
+                "role": sess["role"],
+                "name": sess["name"],
+                "student_id": sess["student_id"],
+                "school_name": sess["school_name"],
+            }
+
+        # 3. Stateless cryptographic HMAC verification (survives container recycling)
         if token.startswith("sess_") and "_" in token[5:]:
             import base64
             import hashlib
@@ -268,7 +533,6 @@ class LearningStorage:
                 if len(parts) >= 2:
                     b64_payload = parts[0]
                     provided_sig = parts[1]
-                    # Restore base64 padding
                     padding = 4 - (len(b64_payload) % 4)
                     if padding < 4:
                         b64_payload += "=" * padding
@@ -278,41 +542,35 @@ class LearningStorage:
                         data = json.loads(payload_bytes.decode("utf-8"))
                         if data.get("exp", 0) > time.time():
                             username = data.get("sub", "")
-                            # Check if user exists in database
-                            with sqlite3.connect(self.db_path) as conn:
-                                cur = conn.cursor()
-                                cur.execute("SELECT username, role, name, student_id, school_name FROM users WHERE username = ?;", (username,))
-                                urow = cur.fetchone()
-                                if urow:
-                                    # Restore active session record
-                                    conn.execute(
-                                        "INSERT OR IGNORE INTO user_sessions (token, username, role, created_at) VALUES (?, ?, ?, ?);",
-                                        (token, username, data.get("role", "student"), datetime.now(timezone.utc).isoformat()),
-                                    )
-                                    return {
-                                        "username": urow[0],
-                                        "role": urow[1],
-                                        "name": urow[2],
-                                        "student_id": urow[3],
-                                        "school_name": urow[4],
-                                    }
-                            # Synthesize minimal verified user profile if db was wiped
-                            return {
+                            role = data.get("role", "student")
+                            name = data.get("name") or username.split("@")[0].capitalize()
+                            student_id = data.get("student_id") or (f"s_{username.replace('@', '_').replace('.', '_')}" if role == "student" else None)
+                            school_name = data.get("school_name", "IRONCLAD Academy")
+
+                            user_obj = {
                                 "username": username,
-                                "role": data.get("role", "student"),
-                                "name": username.split("@")[0].capitalize(),
-                                "student_id": f"s_{username.replace('@', '_').replace('.', '_')}",
-                                "school_name": "IRONCLAD Academy",
+                                "role": role,
+                                "name": name,
+                                "student_id": student_id,
+                                "school_name": school_name,
                             }
-            except Exception:
-                pass
+                            # Cache in memory
+                            _MEMORY_SESSIONS[token] = {**user_obj, "token": token, "created_at": datetime.now(timezone.utc).isoformat()}
+                            _MEMORY_USERS[username.lower()] = {**user_obj, "password_hash": ""}
+                            return user_obj
+            except Exception as e:
+                logger.warning(f"HMAC token decode error: {e}")
 
         return None
 
     def delete_session(self, token: str) -> None:
         """Invalidates a session token upon logout."""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("DELETE FROM user_sessions WHERE token = ?;", (token,))
+        _MEMORY_SESSIONS.pop(token, None)
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute("DELETE FROM user_sessions WHERE token = ?;", (token,))
+        except Exception:
+            pass
 
     def get_or_create_student(
         self, student_id: str, name: str, domain: str = "class10_maths"

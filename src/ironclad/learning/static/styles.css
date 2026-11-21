@@ -1331,3 +1331,90 @@ body.lite-theme {
 .evidence-ul li {
   margin-bottom: 0.35rem;
 }
+
+/* ========================================================================= */
+/* QUICK DEMO ACCOUNTS HELPER                                                */
+/* ========================================================================= */
+.demo-accounts-helper {
+  margin-bottom: 1.25rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+}
+
+.demo-helper-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.55rem;
+}
+
+.demo-chips-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.demo-chip-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.demo-chip-btn:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.demo-chip-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.demo-chip-icon.student {
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--primary-color);
+}
+
+.demo-chip-icon.teacher {
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--teal-600);
+}
+
+.demo-chip-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.demo-chip-text strong {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+}
+
+.demo-chip-sub {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.svg-icon.xs {
+  width: 14px;
+  height: 14px;
+}
+
