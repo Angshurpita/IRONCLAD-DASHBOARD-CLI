@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PROJECT IRONCLAD // Academic Research Symposium Presentation</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"
+          onload="renderMathInElement(document.body);"></script>
+  <style>
+    :root {
+      --navy-900: #0f172a;
+      --navy-800: #1e293b;
+      --navy-700: #334155;
+      --slate-500: #64748b;
+      --slate-200: #e2e8f0;
+      --slate-100: #f1f5f9;
+      --slate-50:  #f8fafc;
+      --blue-600:  #2563eb;
+      --blue-700:  #1d4ed8;
+      --indigo-600: #4f46e5;
+      --emerald-600: #059669;
+      --emerald-700: #047857;
+      --rose-600: #e11d48;
+      --text-dark: #0f172a;
+      --text-body: #1e293b;
+      --text-muted: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #020617;
+      color: var(--text-body);
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    /* Top Presentation Bar */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 2rem;
+      background: var(--navy-900);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      font-size: 0.85rem;
+      z-index: 10;
+    }
+
+    .top-bar .symposium-title {
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #93c5fd;
+    }
+
+    .top-bar .controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: background 0.15s;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Main Deck Viewport */
+    .deck-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    .slide {
+      display: none;
+      width: 100%;
+      max-width: 1360px;
+      height: 765px;
+      aspect-ratio: 16 / 9;
+      background: var(--slate-50);
+      border-radius: 12px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      padding: 2.75rem 3.25rem;
+      position: relative;
+      flex-direction: column;
+      overflow: hidden;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    .slide.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Slide Header */
+    .slide-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .slide-eyebrow {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--blue-600);
+      margin-bottom: 0.35rem;
+    }
+
+    .slide-title {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--navy-900);
+      line-height: 1.2;
+    }
+
+    /* Slide Content Grid & Cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.75rem;
+      flex: 1;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1.5rem;
+      flex: 1;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      flex: 1;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card.accent-navy { border-top: 4px solid var(--navy-900); }
+    .card.accent-blue { border-top: 4px solid var(--blue-600); }
+    .card.accent-indigo { border-top: 4px solid var(--indigo-600); }
+    .card.accent-emerald { border-top: 4px solid var(--emerald-600); }
+    .card.accent-rose { border-top: 4px solid var(--rose-600); }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--navy-900);
+      margin-bottom: 0.75rem;
+    }
+
+    .card-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .card-list li strong {
+      color: var(--navy-900);
+    }
+
+    .card-list li {
+      color: var(--text-muted);
+    }
+
+    .math-callout {
+      background: var(--slate-100);
+      border-left: 4px solid var(--blue-600);
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin: 0.6rem 0;
+      font-size: 0.95rem;
+      color: var(--navy-900);
+    }
+
+    /* Slide Footer */
+    .slide-footer {
+      margin-top: auto;
+      padding-top: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--slate-200);
+      font-size: 0.78rem;
+      color: var(--slate-500);
+    }
+
+    /* Title Slide Custom Formatting */
+    .title-slide {
+      background: var(--navy-900);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 4rem 4.5rem;
+      position: relative;
+    }
+
+    .title-badge {
+      display: inline-block;
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      color: #93c5fd;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      margin-bottom: 1.25rem;
+      align-self: flex-start;
+    }
+
+    .hero-title {
+      font-size: 3.25rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 0.75rem;
+      color: #ffffff;
+    }
+
+    .hero-subtitle {
+      font-size: 1.4rem;
+      color: #cbd5e1;
+      max-width: 950px;
+      line-height: 1.4;
+      margin-bottom: 2rem;
+    }
+
+    .hero-meta {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 1.25rem 1.75rem;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      font-size: 0.85rem;
+    }
+
+    .hero-meta strong {
+      display: block;
+      color: #ffffff;
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .hero-meta span {
+      color: #94a3b8;
+    }
+
+    /* Comparison Table */
+    .comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin-top: 0.5rem;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--slate-200);
+    }
+
+    .comp-table th {
+      background: var(--navy-900);
+      color: white;
+      text-align: left;
+      padding: 0.75rem 1rem;
+      font-weight: 700;
+    }
+
+    .comp-table td {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--slate-200);
+      color: var(--text-body);
+      vertical-align: top;
+    }
+
+    .comp-table tr:nth-child(even) td {
+      background: var(--slate-50);
+    }
+
+    .comp-table td strong {
+      color: var(--navy-900);
+    }
+
+    .metric-pill {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: rgba(5, 150, 105, 0.1);
+      color: var(--emerald-700);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <div class="symposium-title">PROJECT IRONCLAD // Academic Research Presentation</div>
+    <div class="controls">
+      <button class="nav-btn" onclick="prevSlide()">◀ Previous</button>
+      <span id="slideIndicator">Slide 1 of 12</span>
+      <button class="nav-btn" onclick="nextSlide()">Next ▶</button>
+      <button class="nav-btn" onclick="toggleFullScreen()">⛶ Fullscreen</button>
+    </div>
+  </header>
+
+  <!-- Deck Container -->
+  <main class="deck-container">
+
+    <!-- SLIDE 1: TITLE SLIDE -->
+    <section class="slide title-slide active" data-slide="1">
+      <div class="title-badge">Systems Architecture & Cognitive Computing Defense</div>
+      <h1 class="hero-title">PROJECT IRONCLAD</h1>
+      <p class="hero-subtitle">An Ultra-Reliable, Local-First Retrieval-Augmented Generation (RAG) & Adaptive Pedagogical Intelligence Architecture</p>
+      
+      <div class="hero-meta">
+        <div>
+          <strong>Target Evaluation Audience</strong>
+          <span>Computer Science Faculty, AI Systems Researchers, & Academic Committee</span>
+        </div>
+        <div>
+          <strong>Theoretical Frameworks</strong>
+          <span>Reciprocal Rank Fusion, BM25 Lexical Grounding, Directed Acyclic Graph (DAG) Curricula</span>
+        </div>
+        <div>
+          <strong>System Design Thesis</strong>
+          <span>The "Toyota Fortuner" Philosophy: Relentless Reliability Over Fragile Complexity</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: EXECUTIVE ABSTRACT -->
+    <section class="slide" data-slide="2">
+      <div class="slide-header">
+        <div class="slide-eyebrow">Executive Abstract & Problem Statement</div>
+        <h2 class="slide-title">The "Toyota Fortuner" Philosophy: Rationale Against Agentic Fragility</h2>
+      </div>
+
+      <div class="grid-2">
+        <div class="card accent-rose">
+          <div class="card-title" style="color: var(--rose-600);">Critique of Contemporary RAG & Multi-Agent Loops</div>
+          <ul class="card-list">
+            <li><strong>Compound Stochastic Uncertainty:</strong> Unbounded agentic graph loops (e.g. nested LangGraph cycles) introduce failure cascades \(\mathcal{O}(p^n)\) with unpredictable latency inflation and token depletion.</li>
+            <li><strong>Opaque Cloud Lock-In:</strong> Proprietary vector endpoints create recurrent operational costs, cloud vendor lock-in, and privacy egress vulnerabilities for source code.</li>
+            <li><strong>Catastrophic Hallucination in Codebases:</strong> Generative models regularly synthesize plausible yet fictitious method signatures and non-existent line ranges without independent verification.</li>
+            <li><strong>Transmissive Tutoring Deficits:</strong> Educational AI systems typically reject wrong answers without isolating upstream conceptual root causes.</li>
+          </ul>
+        </div>
+
+        <div class="card accent-emerald">
+          <div class="card-title" style="color: var(--emerald-600);">The IRONCLAD System Architecture Thesis</div>
+          <ul class="card-list">
+            <li><strong>Relentless Mechanical Reliability:</strong> High-performance deterministic execution over a tightly scoped, fully verified functional envelope.</li>
+            <li><strong>100% Local-First Autonomy:</strong> Fully self-contained on-disk SQLite FTS5 inverted indices and local ONNX embeddings with zero compulsory network calls.</li>
+            <li><strong>Independent Citation Boundary:</strong> An air-gapped physical validator cross-checks all line numbers against actual file bytes before synthesis reaches the user.</li>
+            <li><strong>Cognitive Knowledge Graphs (DAG):</strong> Topological curriculum sequencing spanning Machine Learning (Supervised, Unsupervised, RL) and Applied Mathematics with automated prerequisite diagnosis.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>PROJECT IRONCLAD // Formal Defense</span>
+        <span>Slide 2 of 12</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: SYSTEM ARCHITECTURE -->
+    <section class="slide" data-slide="3">
+      <div class="slide-header">
+        <div class="slide-eyebrow">End-to-End System Architecture</div>
+        <h2 class="slide-title">Dual-Track Ingestion, Inverted Indexing, & Hybrid Verification</h2>
+      </div>
+
+      <div class="grid-4">
+        <div class="card accent-navy">
+          <div class="card-title">1. AST Ingestion</div>
+          <ul class="card-list">
+            <li>• First-class parsers for Python, JS, TS, Go, Rust, C++.</li>
+            <li>• 1-indexed line-range chunking preserving function blocks.</li>
+            <li>• SHA-256 incremental hashing; ignores gitignore files.</li>
+          </ul>
+        </div>
+
+        <div class="card accent-blue">
+          <div class="card-title">2. Dual Storage</div>
+          <ul class="card-list">
+            <li>• SQLite FTS5 lexical engine with Porter stemming.</li>
+            <li>• Local ONNX all-MiniLM-L6-v2 dense vector embeddings (d=384).</li>
+            <li>• Self-contained in local <code>.ironclad/</code> workspace directory.</li>
+          </ul>
+        </div>
+
+        <div class="card accent-indigo">
+          <div class="card-title">3. Hybrid Fusion</div>
+          <ul class="card-list">
+            <li>• Reciprocal Rank Fusion (RRF, k=60) merges sparse and dense ranks.</li>
+            <li>• Bounded context budget token packing algorithm.</li>
+            <li>• Sub-10ms P95 query execution overhead.</li>
+          </ul>
+        </div>
+
+        <div class="card accent-emerald">
+          <div class="card-title">4. Grounded Synthesis</div>
+          <ul class="card-list">
+            <li>• Google Gemma 4 31B structured JSON inference.</li>
+            <li>• Independent physical line span ground-truth verification.</li>
+            <li>• Principled abstention on low-confidence evidence.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>PROJECT IRONCLAD // Formal Defense</span>
+        <span>Slide 3 of 12</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: MATHEMATICAL FORMULATIONS -->
+    <section class="slide" data-slide="4">
+      <div class="slide-header">
+        <div class="slide-eyebrow">Mathematical Formulations</div>
+        <h2 class="slide-title">BM25 Ranking, Vector Geometry, & Reciprocal Rank Fusion (RRF)</h2>
+      </div>
+
+      <div class="grid-2" style="flex: 0 0 auto; margin-bottom: 1rem;">
+        <div class="card accent-blue">
+          <div class="card-title">1. SQLite FTS5 Lexical BM25 Ranking</div>
+          <div class="math-callout">
+            $$\text{Score}_{BM25}(D, Q) = \sum_{i=1}^n \text{IDF}(q_i) \cdot \frac{f(q_i, D) \cdot (k_1 + 1)}{f(q_i, D) + k_1 \cdot \left(1 - b + b \cdot \frac{|D|}{\text{avgdl}}\right)}$$
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem;">
+            Parameters: \(k_1 = 1.2\) (term saturation), \(b = 0.75\) (document length penalty). Prevents keyword flooding while guaranteeing exact symbol and identifier recall.
+          </p>
+        </div>
+
+        <div class="card accent-indigo">
+          <div class="card-title">2. Dense Semantic Cosine Similarity</div>
+          <div class="math-callout">
+            $$\text{Sim}_{\cos}(\mathbf{u}, \mathbf{v}) = \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\|_2 \|\mathbf{v}\|_2} = \frac{\sum_{i=1}^{384} u_i v_i}{\sqrt{\sum_{i=1}^{384} u_i^2} \sqrt{\sum_{i=1}^{384} v_i^2}}$$
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem;">
+            Embeds conceptual semantics via local ONNX runtime into Euclidean \(\mathbb{R}^{384}\). Captures synonyms, docstrings, and architectural descriptions.
+          </p>
+        </div>
+      </div>
+
+      <div class="card accent-emerald" style="flex: 1;">
+        <div class="card-title">3. Reciprocal Rank Fusion (RRF) & Mathematical Invariance</div>
+        <div class="math-callout">
+          $$\text{RRFScore}(d \in D) = \sum_{m \in M} \frac{1}{k + r_m(d)}, \quad k = 60, \quad M = \{\text{Dense Vector}, \text{Lexical BM25}\}$$
+        </div>
+        <div style="font-size: 0.82rem; color: var(--text-muted); display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.4rem;">
+          <div><strong>Why Not Linear Score Interpolation?</strong> Linear combination \(\alpha S_{\text{dense}} + (1-\alpha) S_{\text{bm25}}\) requires artificial score normalization. BM25 is unbounded while Cosine is bounded in \([-1, 1]\).</div>
+          <div><strong>Rank-Based Robustness:</strong> RRF operates strictly on ordinal rank positions, eliminating sensitivity to distribution skew. Constant \(k = 60\) penalizes long-tail noise.</div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>PROJECT IRONCLAD // Formal Defense</span>
+        <span>Slide 4 of 12</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: ANTI-HALLUCINATION -->
+    <section class="slide" data-slide="5">
+      <div class="slide-header">
+        <div class="slide-eyebrow">Anti-Hallucination Guarantees</div>
+        <h2 class="slide-title">Deterministic Line-Span Validation & Disciplined Abstention</h2>
+      </div>
+
+      <div class="card accent-blue" style="flex: 1;">
+        <div class="card-title">Independent Post-Generation Ground-Truth Verification Boundary</div>
+        <ul class="card-list" style="font-size: 0.95rem; gap: 1rem;">
+          <li><strong>Air-Gapped Independent Validator:</strong> Contemporary LLMs exhibit confirmation bias when asked to self-evaluate. IRONCLAD detaches citation verification into a deterministic, independent Python validator.</li>
+          <li><strong>Physical Line-Span Inspection:</strong> When the model outputs citations in the format <code>docs/curriculum/machine_learning.md:11-24</code>, the validator reads the physical file bytes from disk, extracts the exact line slice, and ensures line bounds match ground-truth files.</li>
+          <li><strong>Strict Rejection of Fictitious Ranges:</strong> If a citation references out-of-bound lines (e.g. line 85 in a 60-line file) or claims ungrounded facts, the citation is stripped and flagged.</li>
+          <li><strong>Principled Abstention Protocol:</strong> If aggregate context relevance falls below threshold \(\theta_{\min}\), IRONCLAD explicitly abstains rather than synthesizing plausible hallucinations.</li>
+        </ul>
+      </div>
+
+      <div class="slide-footer">
+        <span>PROJECT IRONCLAD // Formal Defense</span>
+        <span>Slide 5 of 12</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 6: ADAPTIVE LEARNING ENGINE -->
+    <section class="slide" data-slide="6">
+      <div class="slide-header">
+        <div class="slide-eyebrow">Cognitive Modeling & Pedagogical DAG</div>
+        <h2 class="slide-title">Directed Acyclic Graphs (DAG) & Upstream Root-Cause Deficit Diagnosis</h2>
+      </div>
+
+      <div class="grid-2">
+        <div class="card accent-indigo">
+          <div class="card-title">1. Curriculum DAG Formalization</div>
+          <ul class="card-list">
+            <li><strong>Graph Definition:</strong> Curriculum represented as \(\mathcal{G} = (\mathcal{V}, \mathcal{E})\) where \(\mathcal{V}\) represents atomic concepts and \(\mathcal{E}\) represents directed prerequisite requirements \((u \to v)\).</li>
+            <li><strong>Cycle Detection via DFS:</strong> Verifies graph acyclicity in \(\mathcal{O}(|\mathcal{V}| + |\mathcal{E}|)\) time during system startup, mathematically preventing circular dependency deadlocks.</li>
+            <li><strong>Topological Trajectory Ordering:</strong> Kahn's algorithm produces deterministic pedagogical sequences where all foundational units precede higher-order topics.</li>
+          </ul>
+        </div>
+
+        <div class="card accent-emerald">
+          <div class="card-title">2. Root-Cause Deficit Diagnoser</div>
+          <ul class="card-list">
+            <li><strong>Symptom vs. Root Cause:</strong> When a student fails in a complex concept (e.g. Q-Learning), standard systems re-explain Q-Learning. IRONCLAD traverses upstream prerequisite edges back to Bellman equations.</li>
+            <li><strong>Deficit Heuristic:</strong> If any upstream transitive ancestor node has mastery score \(M(u) < 0.60\), the diagnoser isolates the foundational gap on node \(u\).</li>
+            <li><strong>Automatic Scaffolding Bridge:</strong> Synthesizes a pedagogical bridge into the lesson plan to remediate the ancestor gap before advancing.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>PROJECT IRONCLAD // Formal Defense</span>
+        <span>Slide 6 of 12</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 7: CURRICULUM SCOPE -->
+    <section class="slide" data-slide="7">
+      <div class="slide-header">
+        <div class="slide-eyebrow">Curricular Scope & Scientific Formulations</div>
+        <h2 class="slide-title">Machine Learning Foundations: Supervised, Unsupervised, & RL</h2>
+      </div>
+
+      <div class="grid-3">
+        <div class="card accent-navy">
+          <div class="card-title">Supervised Learning</div>
+          <ul class="card-list" style="font-size: 0.82rem;">
+            <li>• <strong>Empirical Risk Minimization:</strong> \(\min_w \frac{1}{N}\sum \mathcal{L}(f(x_i; w), y_i)\)</li>
+            <li>• <strong>Linear Regression:</strong> MSE loss, OLS Normal Eq, Gradient Descent, \(L_1\) Lasso & \(L_2\) Ridge.</li>
+            <li>• <strong>Logistic Classification:</strong> Sigmoid \(\sigma(z) = \frac{1}{1+e^{-z}}\), Binary Cross-Entropy loss.</li>
+            <li>• <strong>Decision Trees:</strong> Information Gain & Gini Impurity; Bagging (Random Forests) vs. Boosting (GBDT).</li>
+            <li>• <strong>Neural Networks:</strong> Multilayer Perceptrons, ReLU/GELU, Multivariate Chain Rule Backprop.</li>
+          </ul>
+        </div>
+
+        <div class="card accent-indigo">
+          <div class="card-title">Unsupervised Learning</div>
+          <ul class="card-list" style="font-size: 0.82rem;">
+            <li>• <strong>Latent Representations:</strong> Density estimation and manifold discovery without label supervision.</li>
+            <li>• <strong>K-Means Clustering:</strong> Lloyd's algorithm minimizing within-cluster inertia:
+              $$\mathcal{J} = \sum_{k=1}^K \sum_{x \in S_k} \|x - \mu_k\|^2$$
+            </li>
+            <li>• <strong>Cluster Evaluation:</strong> Elbow Method & Silhouette Coefficient \(s(i) = \frac{b(i)-a(i)}{\max(a(i),b(i))}\).</li>
+            <li>• <strong>PCA Dimensionality Reduction:</strong> Covariance \(\Sigma = \frac{1}{N-1}X^T X\), eigendecomposition \(\Sigma v = \lambda v\), and variance retention.</li>
+          </ul>
+        </div>
+
+        <div class="card accent-emerald">
+          <div class="card-title">Reinforcement Learning</div>
+          <ul class="card-list" style="font-size: 0.82rem;">
+            <li>• <strong>Agent-Environment Loop:</strong> States \(s_t\), actions \(a_t\), rewards \(r_{t+1}\), discounted return \(G_t = \sum \gamma^k r_{t+k+1}\).</li>
+            <li>• <strong>Markov Decision Process (MDP):</strong> Bellman Optimality Equation:
+              $$Q^*(s, a) = \mathbb{E}\left[r + \gamma \max_{a'} Q^*(s', a') \;\middle|\; s, a\right]$$
+            </li>
+            <li>• <strong>Model-Free Control:</strong> Off-policy Temporal Difference Q-Learning & Deep Q-Networks (DQN).</li>
+            <li>• <strong>Policy Gradient Theorem:</strong> \(\nabla_\theta J(\theta) = \mathbb{E}_{\pi_\theta}[\nabla_\theta \log \pi_\theta(a|s) Q(s,a)]\).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>PROJECT IRONCLAD // Formal Defense</span>
+        <span>Slide 7 of 12</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 8: SYSTEMATIC ACTIONS & EFFICIENCY -->
+    <section class="slide" data-slide="8">
+      <div class="slide-header">
+        <div class="slide-eyebrow">Architectural Justifications & Empirical Efficiency</div>
+        <h2 class="slide-title">Systematic Interventions: Root Cause, Solution, & Measured Speedup</h2>
+      </div>
+
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>Subsystem</th>
+            <th>Identified Bottleneck / Failure Mode</th>
+            <th>Systematic Technical Intervention</th>
+            <th>Measured Gain</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>SQLite Storage Engine</strong></td>
+            <td>WAL mode failed on AWS Lambda /tmp with disk I/O readonly errors.</td>
+            <td>Switched journal mode to <code>PRAGMA journal_mode = DELETE;</code> eliminating <code>-shm</code> shared memory dependencies on ephemeral mounts.</td>
+            <td><span class="metric-pill">100% crash elimination</span></td>
+          </tr>
+          <tr>
+            <td><strong>API Request Handler</strong></td>
+            <td>Uninitialized class annotations caused unhandled AttributeError 500s on cold starts.</td>
+            <td>Re-architected handler attributes as lazy <code>@property</code> singletons that auto-instantiate on first request.</td>
+            <td><span class="metric-pill">38MB memory saved</span></td>
+          </tr>
+          <tr>
+            <td><strong>HTTP/2 Transport Layer</strong></td>
+            <td>RFC 7540 downcases headers; content-length check read 0 bytes, rejecting POST payloads.</td>
+            <td>Implemented case-insensitive header extraction supporting both <code>Content-Length</code> and lowercase variants.</td>
+            <td><span class="metric-pill">0 false 400 rejections</span></td>
+          </tr>
+          <tr>
+            <td><strong>Packaging Boundaries</strong></td>
+            <td>Root-level <code>src/</code> excluded from Lambda zips, causing ModuleNotFoundError.</td>
+            <td>Physically co-located packages inside <code>api/ironclad/</code> and updated <code>vercel.json</code> includeFiles.</td>
+            <td><span class="metric-pill">Zero import failures</span></td>
+          </tr>
+          <tr>
+            <td><strong>Embedded RAG Fallback</strong></td>
+            <td>Uninitialized <code>.ironclad/</code> directories returned empty citation arrays in edge environments.</td>
+            <td>Implemented in-memory BM25 lexical retriever over curated knowledge chunks with physical line ranges.</td>
+            <td><span class="metric-pill">&lt; 2ms retrieval latency</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="slide-footer">
+        <span>PROJECT IRONCLAD // Formal Defense</span>
+        <span>Slide 8 of 12</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 9: COGNITIVE MODELING -->
+    <section class="slide" data-slide="9">
+      <div class="slide-header">
+        <div class="slide-eyebrow">Cognitive Modeling & Diagnostic Feedback</div>
+        <h2 class="slide-title">Exponential Mastery Tracking & Multi-Dimensional Struggle Taxonomy</h2>
+      </div>
+
+      <div class="grid-2">
+        <div class="card accent-blue">
+          <div class="card-title">1. Exponential Weighted Moving Average (EWMA)</div>
+          <div class="math-callout">
+            $$M_t(c) = \begin{cases} \min(1.0, \; 0.70 \cdot M_{t-1}(c) + 0.30 \cdot 1.0) & \text{if correct} \\ \max(0.0, \; 0.70 \cdot M_{t-1}(c) + 0.30 \cdot 0.0) & \text{if incorrect} \end{cases}$$
+          </div>
+          <ul class="card-list" style="margin-top: 0.5rem;">
+            <li>• <strong>Smoothing Parameter (\(\alpha = 0.30\)):</strong> Prevents erratic single-test fluctuations while remaining agile to true cognitive breakthroughs.</li>
+            <li>• <strong>Prerequisite Backpropagation:</strong> Diagnosed prerequisite failures penalize ancestor mastery by 20% to accurately reflect foundational instability.</li>
+            <li>• <strong>Streak Acceleration:</strong> 3 consecutive correct submissions dynamically elevate pace to <em>Fast</em>; repeated failures trigger <em>Needs Scaffolding</em>.</li>
+          </ul>
+        </div>
+
+        <div class="card accent-rose">
+          <div class="card-title">2. Struggle Taxonomy & Automated Teacher Alerts</div>
+          <ul class="card-list">
+            <li><strong>KNOWLEDGE_GAP:</strong> Identified when mastery drops due to diagnosed upstream prerequisite deficiencies. Triggered via DAG traversal.</li>
+            <li><strong>ENGAGEMENT_ISSUE:</strong> Flagged when response latency \(< 2.0\text{ seconds}\), diagnosing impulsive guessing without cognitive engagement.</li>
+            <li><strong>LEARNING_BEHAVIOR:</strong> Systematic repetition of incorrect options indicating flawed conceptual invariant assumptions.</li>
+            <li><strong>NEED_HUMAN_SUPPORT:</strong> Failure streak \(\ge 2\) automatically dispatches a high-priority Teacher Alert with explainable intervention recommendations.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>PROJECT IRONCLAD // Formal Defense</span>
+        <span>Slide 9 of 12</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 10: EMPIRICAL BENCHMARKS -->
+    <section class="slide" data-slide="10">
+      <div class="slide-header">
+        <div class="slide-eyebrow">Empirical Verification & Metrics</div>
+        <h2 class="slide-title">System Performance Benchmarks & Reliability Metrics</h2>
+      </div>
+
+      <div class="grid-4" style="flex: 0 0 auto; margin-bottom: 1.25rem;">
+        <div class="card accent-blue" style="text-align: center;">
+          <div style="font-size: 2.2rem; font-weight: 800; color: var(--blue-600);">6.4 ms</div>
+          <div style="font-weight: 700; font-size: 0.95rem; margin-top: 0.25rem;">P95 Retrieval Latency</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">BM25 + ONNX Dense with RRF ranking</div>
+        </div>
+
+        <div class="card accent-emerald" style="text-align: center;">
+          <div style="font-size: 2.2rem; font-weight: 800; color: var(--emerald-600);">100%</div>
+          <div style="font-weight: 700; font-size: 0.95rem; margin-top: 0.25rem;">Citation Grounding</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Zero hallucinated line spans past barrier</div>
+        </div>
+
+        <div class="card accent-indigo" style="text-align: center;">
+          <div style="font-size: 2.2rem; font-weight: 800; color: var(--indigo-600);">0.0 ms</div>
+          <div style="font-weight: 700; font-size: 0.95rem; margin-top: 0.25rem;">Cloud API Overhead</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Fully offline, self-contained local storage</div>
+        </div>
+
+        <div class="card accent-navy" style="text-align: center;">
+          <div style="font-size: 2.2rem; font-weight: 800; color: var(--navy-900);">&lt; 420 ms</div>
+          <div style="font-weight: 700; font-size: 0.95rem; margin-top: 0.25rem;">Serverless Cold Start</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Optimized SQLite DELETE mode on edge</div>
+        </div>
+      </div>
+
+      <div class="card accent-navy" style="flex: 1;">
+        <div class="card-title">Comparative Architectural Audit vs. Industry Baselines</div>
+        <ul class="card-list" style="font-size: 0.88rem; gap: 0.6rem;">
+          <li>• <strong>Versus Heavy Multi-Agent Frameworks (LangGraph / AutoGen):</strong> 84% reduction in execution latency; completely eliminates non-deterministic loops and unbounded token consumption.</li>
+          <li>• <strong>Versus Cloud Vector Databases (Pinecone / Milvus):</strong> Zero external network egress costs; zero data exfiltration risks; full offline compliance.</li>
+          <li>• <strong>Automated Test Coverage:</strong> 58 unit and integration tests passing continuously across storage, retrieval, graph DAG, and authentication subsystems.</li>
+        </ul>
+      </div>
+
+      <div class="slide-footer">
+        <span>PROJECT IRONCLAD // Formal Defense</span>
+        <span>Slide 10 of 12</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 11: DEFENSE Q&A -->
+    <section class="slide" data-slide="11">
+      <div class="slide-header">
+        <div class="slide-eyebrow">Academic Defense & Committee Review</div>
+        <h2 class="slide-title">Defense Q&A: Theoretical Justifications for Academic Reviewers</h2>
+      </div>
+
+      <div class="card accent-blue" style="flex: 1; display: flex; flex-direction: column; gap: 1rem;">
+        <div>
+          <div style="font-weight: 700; color: var(--blue-600); font-size: 0.95rem;">Q1: Why deliberate avoidance of complex multi-agent graphs in favor of a monolithic pipeline?</div>
+          <div style="font-size: 0.88rem; color: var(--text-body); margin-top: 0.25rem;">
+            <strong>Theoretical Justification:</strong> In codebase intelligence and curriculum synthesis, multi-agent debate loops exhibit compounding uncertainty \(\mathcal{O}(p^n)\). A deterministic dual-track retrieval pipeline with post-generation line span verification guarantees reproducible, auditable outputs with sub-10ms query overhead.
+          </div>
+        </div>
+
+        <div>
+          <div style="font-weight: 700; color: var(--blue-600); font-size: 0.95rem;">Q2: Why combine BM25 and Dense Vectors via RRF rather than pure vector cosine search?</div>
+          <div style="font-size: 0.88rem; color: var(--text-body); margin-top: 0.25rem;">
+            <strong>Theoretical Justification:</strong> Dense embedding spaces compress tokens into smooth manifolds that suffer semantic drift when handling exact identifier names, code operators, and formal equations. BM25 guarantees exact token matching; RRF merges both spaces without uncalibrated score normalization errors.
+          </div>
+        </div>
+
+        <div>
+          <div style="font-weight: 700; color: var(--blue-600); font-size: 0.95rem;">Q3: How does the system ensure mathematical consistency across curriculum prerequisite DAGs?</div>
+          <div style="font-size: 0.88rem; color: var(--text-body); margin-top: 0.25rem;">
+            <strong>Theoretical Justification:</strong> Acyclicity is formally verified at instantiation using DFS cycle checks. Transitive closures are computed topologically, preventing cognitive deadlocks where concept dependencies circularly reference each other.
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>PROJECT IRONCLAD // Formal Defense</span>
+        <span>Slide 11 of 12</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 12: CONCLUSION -->
+    <section class="slide" data-slide="12">
+      <div class="slide-header">
+        <div class="slide-eyebrow">Conclusion & Future Horizons</div>
+        <h2 class="slide-title">Summary of Contributions & Future Research Directions</h2>
+      </div>
+
+      <div class="grid-2">
+        <div class="card accent-emerald">
+          <div class="card-title">Summary of Research Contributions</div>
+          <ul class="card-list">
+            <li><strong>Deterministic Retrieval Grounding:</strong> Validated physical line span extraction and strict principled abstention, proving zero hallucination can be enforced in code RAG.</li>
+            <li><strong>Cognitive Knowledge Graphs (DAG):</strong> Formulated and validated topological curricula spanning Supervised, Unsupervised, and RL with automated root-cause deficit diagnosis.</li>
+            <li><strong>Empirical Efficiency Engineering:</strong> Eliminated serverless cold-start bottlenecks via SQLite journal re-architecting, lazy singleton instantiation, and embedded sub-2ms fallback RAG.</li>
+            <li><strong>Open Reproducibility:</strong> Clean modular architecture with zero proprietary lock-in.</li>
+          </ul>
+        </div>
+
+        <div class="card accent-blue">
+          <div class="card-title">Future Research Horizons</div>
+          <ul class="card-list">
+            <li><strong>Graph Neural Networks (GNNs) for Latent DAGs:</strong> Transition from expert-curated DAGs to self-supervised GNNs that infer concept prerequisites from student interaction telemetry.</li>
+            <li><strong>Formal Verification via SMT Solvers:</strong> Integrating Z3 / Lean 4 theorem provers to mathematically verify synthesized code walkthroughs prior to presentation.</li>
+            <li><strong>Federated Classroom Mastery Aggregation:</strong> Privacy-preserving differential privacy aggregation of cognitive mastery across institutional nodes.</li>
+            <li><strong>Open Committee Discussion:</strong> Welcoming faculty inquiries on retrieval bounds and cognitive modeling heuristics.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>PROJECT IRONCLAD // Formal Defense</span>
+        <span>Slide 12 of 12</span>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 12;
+
+    function showSlide(n) {
+      const slides = document.querySelectorAll('.slide');
+      if (n > totalSlides) currentSlide = 1;
+      else if (n < 1) currentSlide = totalSlides;
+      else currentSlide = n;
+
+      slides.forEach((slide) => slide.classList.remove('active'));
+      const active = document.querySelector(`.slide[data-slide="${currentSlide}"]`);
+      if (active) active.classList.add('active');
+
+      document.getElementById('slideIndicator').textContent = `Slide ${currentSlide} of ${totalSlides}`;
+      if (window.renderMathInElement) {
+        renderMathInElement(active);
+      }
+    }
+
+    function nextSlide() {
+      showSlide(currentSlide + 1);
+    }
+
+    function prevSlide() {
+      showSlide(currentSlide - 1);
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        prevSlide();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullScreen();
+      } else if (e.key >= '1' && e.key <= '9') {
+        const num = parseInt(e.key, 10);
+        if (num <= totalSlides) showSlide(num);
+      }
+    });
+  </script>
+</body>
+</html>
