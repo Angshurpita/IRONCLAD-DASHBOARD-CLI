@@ -512,3 +512,8 @@ def run_dashboard_server(
     return server
 
 
+def _seed_demo_classroom(storage: LearningStorage) -> None:
+    """Ensures default classroom demo data is initialized."""
+    storage._seed_default_data()
+
+
