@@ -75,7 +75,7 @@ def add_footer(slide, current_slide, total_slides=12):
     txBox = slide.shapes.add_textbox(Inches(0.8), Inches(6.92), Inches(11.7), Inches(0.35))
     tf = txBox.text_frame
     p = tf.paragraphs[0]
-    p.text = f"PROJECT IRONCLAD: Modern Technology & Architectural Decisions for Personalized Education  |  Slide {current_slide} of {total_slides}"
+    p.text = f"PRISM (Personalized Recommendation & Intelligent Student Modelling)  |  Slide {current_slide} of {total_slides}"
     p.font.size = Pt(9)
     p.font.color.rgb = COLOR_TEXT_MUTED
 
@@ -455,7 +455,7 @@ def build_presentation(output_path: Path):
     p.font.color.rgb = COLOR_ACCENT_BLUE
 
     p = tf_cl.add_paragraph()
-    p.text = "Forcing all learners into a monolithic text format generates heavy Extraneous Cognitive Load. By empowering students to dynamically toggle their preferred instructional modality, IRONCLAD minimizes extraneous processing and maximizes Germane Schema Construction."
+    p.text = "Forcing all learners into a monolithic text format generates heavy Extraneous Cognitive Load. By empowering students to dynamically toggle their preferred instructional modality, PRISM minimizes extraneous processing and maximizes Germane Schema Construction."
     p.font.size = Pt(9.5)
     p.font.color.rgb = COLOR_TEXT_BODY
     p.space_before = Pt(4)
@@ -513,7 +513,7 @@ def build_presentation(output_path: Path):
     p.font.color.rgb = COLOR_ACCENT_INDIGO
 
     steps = [
-        ("Symptom vs. Structural Deficit:", "When a student fails on a complex concept (e.g. Q-Learning), naive tutoring loops repeat Q-Learning drills. IRONCLAD recognizes failure on node v is often caused by an unmastered prerequisite u."),
+        ("Symptom vs. Structural Deficit:", "When a student fails on a complex concept (e.g. Q-Learning), naive tutoring loops repeat Q-Learning drills. PRISM recognizes failure on node v is often caused by an unmastered prerequisite u."),
         ("Topological Ancestor Traversal:", "The engine queries the curriculum DAG for all transitive upstream ancestors: Anc(v) = {u ∈ V | u ⇝ v} in dependency order."),
         ("Prerequisite Deficit Threshold:", "If any upstream ancestor has mastery M(u) < 0.60, the diagnoser flags a foundational gap on u rather than penalizing v."),
         ("Dynamic Scaffolding Injection:", "The lesson synthesizer automatically injects a tailored foundational bridge into the student's lesson view to resolve the gap before re-attempting.")
@@ -781,7 +781,7 @@ def build_presentation(output_path: Path):
 
     points_eq = [
         ("The Cloud Divide in Global Education:", "Over 60% of rural schools worldwide lack reliable broadband. Cloud-only AI tools exacerbate global inequality, limiting advanced tutoring to elite schools."),
-        ("Offline Classroom Mini-Nodes:", "IRONCLAD runs completely offline on affordable hardware (Raspberry Pi 5, refurbished laptops), delivering world-class tutoring without an internet connection."),
+        ("Offline Classroom Mini-Nodes:", "PRISM runs completely offline on affordable hardware (Raspberry Pi 5, refurbished laptops), delivering world-class tutoring without an internet connection."),
         ("Zero Marginal Cost Per Student:", "Because embeddings, search, and student profiles run locally, scaling from 1 to 10,000 students incurs $0 in external API costs."),
         ("Absolute Data Sovereignty:", "Minor educational telemetry and diagnostic struggle records never leave the school's local physical boundaries.")
     ]
@@ -890,10 +890,14 @@ def build_presentation(output_path: Path):
         p2.font.color.rgb = COLOR_TEXT_MUTED
 
     # Save presentation
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     prs.save(str(output_path))
     print(f"Successfully generated Lite-Theme PowerPoint presentation: {output_path}")
 
 
 if __name__ == "__main__":
-    out = Path("presentation/PROJECT_IRONCLAD_RESEARCH_SYMPOSIUM.pptx")
-    build_presentation(out)
+    base_dir = Path(__file__).resolve().parent
+    out_prism = base_dir / "PRISM_RESEARCH_SYMPOSIUM.pptx"
+    out_legacy = base_dir / "PROJECT_IRONCLAD_RESEARCH_SYMPOSIUM.pptx"
+    build_presentation(out_prism)
+    build_presentation(out_legacy)
