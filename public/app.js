@@ -2206,10 +2206,10 @@ async function loadTeacherAnalytics() {
     };
   }
 
-  kpiTotalStudents.textContent = summary.total_students || 24;
-  kpiAvgMastery.textContent = `${summary.average_mastery_pct || '74.2'}%`;
-  kpiAtRiskCount.textContent = summary.students_requiring_intervention || 4;
-  kpiUnitsCount.textContent = `${state.nodes.length || 13} Units`;
+  if (kpiTotalStudents) kpiTotalStudents.textContent = summary.total_students || 24;
+  if (kpiAvgMastery) kpiAvgMastery.textContent = `${summary.average_mastery_pct || '74.2'}%`;
+  if (kpiAtRiskCount) kpiAtRiskCount.textContent = summary.students_requiring_intervention || 4;
+  if (kpiUnitsCount) kpiUnitsCount.textContent = `${state.nodes.length || 13} Units`;
 
   renderTeacherAlerts(summary.active_alerts || DUMMY_TEACHER_ALERTS);
   renderClassAnalyticsDistribution(students);
