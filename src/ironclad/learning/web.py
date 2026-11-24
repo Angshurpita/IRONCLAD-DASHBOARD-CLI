@@ -1,4 +1,4 @@
-"""Embedded Web Server for the IRONCLAD Personalized Learning Dashboard.
+"""Embedded Web Server for the PRISM (Personalized Recommendation & Intelligent Student Modelling) Dashboard.
 
 Provides:
 - User Authentication layer (Student vs Teacher role-based portals)

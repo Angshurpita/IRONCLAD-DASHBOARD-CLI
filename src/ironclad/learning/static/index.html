@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IRONCLAD — AI Personalized Mathematics Learning Platform</title>
-  <meta name="description" content="AI Personalized Learning Platform for Class 10th Mathematics featuring Socratic Assessment, Upstream Prerequisite Diagnosis, and Explainable Educator Analytics.">
+  <title>PRISM — Personalized Recommendation &amp; Intelligent Student Modelling</title>
+  <meta name="description" content="PRISM: Personalized Recommendation and Intelligent Student Modelling Platform for Class 10th Mathematics featuring Socratic Assessment, Upstream Prerequisite Diagnosis, and Explainable Educator Analytics.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -32,7 +32,7 @@
             </svg>
           </div>
           <div class="brand-text">
-            <span class="brand-title">IRONCLAD</span>
+            <span class="brand-title">PRISM</span>
             <span id="navRoleTag" class="role-pill">Adaptive Studio</span>
           </div>
         </div>
@@ -98,9 +98,9 @@
               <polyline points="2 12 12 17 22 12"/>
             </svg>
           </div>
-          <h1>IRONCLAD</h1>
-          <p class="auth-tagline">AI-Driven Personalized Learning &amp; Diagnostic Platform</p>
-          <div class="auth-subject-pill">Class 10th Mathematics Curriculum</div>
+          <h1>PRISM</h1>
+          <p class="auth-tagline">Personalized Recommendation &amp; Intelligent Student Modelling</p>
+          <div class="auth-subject-pill">Class 10th Mathematics &amp; AI Analytics Platform</div>
         </div>
 
         <!-- Mode Selector: Sign In vs Create Account -->
@@ -237,7 +237,15 @@
       <div class="portal-title-bar">
         <div>
           <h2>Student Learning Studio</h2>
-          <p class="section-desc">Select any NCERT chapter, choose your preferred instructional modality, and get instant Socratic feedback.</p>
+          <p class="section-desc">Select any concept chapter, choose your preferred instructional modality, and get instant Socratic feedback.</p>
+        </div>
+        <div style="min-width: 300px;">
+          <select id="studentDomainSelect" class="styled-dropdown">
+            <option value="machine_learning" selected>🤖 Machine Learning & AI (Supervised, Unsupervised & RL)</option>
+            <option value="class10_maths">📐 Class 10th Mathematics (NCERT / CBSE)</option>
+            <option value="python_programming">🐍 Python Programming & CS</option>
+            <option value="calculus">📈 Calculus & Mathematical Analysis</option>
+          </select>
         </div>
       </div>
 
@@ -358,6 +366,63 @@
           </article>
         </section>
       </div>
+
+      <!-- 3. Student Personal Learning Journey & Assessment History Section -->
+      <section class="portal-section" style="margin-top: 2.25rem;">
+        <div class="section-header-row">
+          <div class="section-header-left">
+            <svg class="svg-icon text-indigo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <h3>My Learning Journey &amp; Diagnostic History</h3>
+          </div>
+          <span class="tag-badge indigo">Continuous Student Model</span>
+        </div>
+
+        <!-- Student Metrics Summary Cards -->
+        <div class="student-journey-kpi-grid">
+          <div class="journey-kpi-card">
+            <span class="journey-kpi-num" id="studentTotalAttempts">0</span>
+            <span class="journey-kpi-lbl">Quizzes Attempted</span>
+          </div>
+          <div class="journey-kpi-card">
+            <span class="journey-kpi-num text-emerald" id="studentAccuracyPct">0.0%</span>
+            <span class="journey-kpi-lbl">Overall Accuracy</span>
+          </div>
+          <div class="journey-kpi-card">
+            <span class="journey-kpi-num text-amber" id="studentCurrentStreak">0 Streak</span>
+            <span class="journey-kpi-lbl">Active Learning Streak</span>
+          </div>
+          <div class="journey-kpi-card">
+            <span class="journey-kpi-num text-indigo" id="studentMasteredUnits">0 Units</span>
+            <span class="journey-kpi-lbl">Units Mastered (&gt;80%)</span>
+          </div>
+        </div>
+
+        <!-- Student Assessment History Table Card -->
+        <div class="table-glass-card" style="margin-top: 1.25rem;">
+          <div class="table-card-header">
+            <h4>Chronological Socratic Assessment &amp; Feedback Log</h4>
+            <span class="table-subtitle">Review previous attempts, explanations, and identified prerequisite connections</span>
+          </div>
+          <table class="roster-table">
+            <thead>
+              <tr>
+                <th>Date &amp; Time</th>
+                <th>Curriculum Chapter</th>
+                <th>Question &amp; Response</th>
+                <th>Outcome</th>
+                <th>Response Time</th>
+                <th>Socratic Pedagogical Feedback</th>
+              </tr>
+            </thead>
+            <tbody id="studentHistoryTable">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -371,6 +436,14 @@
         <div>
           <h2>Educator Intelligence Center</h2>
           <p class="section-desc">Classroom cohort tracking, automatic prerequisite deficit diagnostics, and explainable intervention rationales.</p>
+        </div>
+        <div style="min-width: 300px;">
+          <select id="teacherDomainSelect" class="styled-dropdown">
+            <option value="machine_learning" selected>🤖 Machine Learning & AI (Supervised, Unsupervised & RL)</option>
+            <option value="class10_maths">📐 Class 10th Mathematics (NCERT / CBSE)</option>
+            <option value="python_programming">🐍 Python Programming & CS</option>
+            <option value="calculus">📈 Calculus & Analysis</option>
+          </select>
         </div>
       </div>
 
@@ -433,6 +506,132 @@
             <span class="kpi-caption">Syllabus Coverage</span>
             <span id="kpiUnitsCount" class="kpi-number">13 Units</span>
             <span class="kpi-detail">NCERT / CBSE Aligned</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Class 10-A Cohort Intelligence & Learning Distribution Grid -->
+      <section class="portal-section">
+        <div class="section-header-row">
+          <div class="section-header-left">
+            <svg class="svg-icon text-indigo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 3v18h18"/>
+              <path d="m19 9-5 5-4-4-3 3"/>
+            </svg>
+            <h3>Class 10-A Cohort Intelligence &amp; Mastery Distribution</h3>
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <button id="openClassReportBtn" class="btn-secondary" style="font-size: 0.82rem; padding: 0.4rem 0.85rem;">
+              <svg class="svg-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              <span>Export Diagnostic Report</span>
+            </button>
+            <span class="tag-badge emerald">Complete Class Model Active</span>
+          </div>
+        </div>
+
+        <div class="class-analytics-grid">
+          <!-- 1. Mastery Tier Distribution -->
+          <div class="analytics-card">
+            <div class="analytics-card-title">
+              <span>Mastery Tier Distribution</span>
+              <small class="text-dim">24 Candidates</small>
+            </div>
+            <div class="tier-bars-list">
+              <div class="tier-bar-row">
+                <div class="tier-label-wrap">
+                  <span class="tier-name text-emerald">Advanced (&ge;80%)</span>
+                  <span class="tier-val" id="tierAdvancedVal">7 Students (29%)</span>
+                </div>
+                <div class="tier-track"><div id="tierAdvancedBar" class="tier-fill emerald" style="width: 29%;"></div></div>
+              </div>
+              <div class="tier-bar-row">
+                <div class="tier-label-wrap">
+                  <span class="tier-name text-indigo">Proficient (65-79%)</span>
+                  <span class="tier-val" id="tierProficientVal">9 Students (38%)</span>
+                </div>
+                <div class="tier-track"><div id="tierProficientBar" class="tier-fill indigo" style="width: 38%;"></div></div>
+              </div>
+              <div class="tier-bar-row">
+                <div class="tier-label-wrap">
+                  <span class="tier-name text-amber">Developing (50-64%)</span>
+                  <span class="tier-val" id="tierDevelopingVal">4 Students (17%)</span>
+                </div>
+                <div class="tier-track"><div id="tierDevelopingBar" class="tier-fill amber" style="width: 17%;"></div></div>
+              </div>
+              <div class="tier-bar-row">
+                <div class="tier-label-wrap">
+                  <span class="tier-name text-rose">Intervention Needed (&lt;50%)</span>
+                  <span class="tier-val" id="tierInterventionVal">4 Students (16%)</span>
+                </div>
+                <div class="tier-track"><div id="tierInterventionBar" class="tier-fill rose" style="width: 16%;"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Preferred Learning Modality Distribution -->
+          <div class="analytics-card">
+            <div class="analytics-card-title">
+              <span>Modality Agency Preferences</span>
+              <small class="text-dim">Active Preferences</small>
+            </div>
+            <div class="modality-dist-list">
+              <div class="modality-dist-item">
+                <div class="modality-dist-badge">Worked Examples</div>
+                <div class="modality-dist-stat" id="modalityCountWorked"><strong>8</strong> students (33%)</div>
+              </div>
+              <div class="modality-dist-item">
+                <div class="modality-dist-badge visual">Visual Proofs</div>
+                <div class="modality-dist-stat" id="modalityCountVisual"><strong>6</strong> students (25%)</div>
+              </div>
+              <div class="modality-dist-item">
+                <div class="modality-dist-badge sim">Simulations</div>
+                <div class="modality-dist-stat" id="modalityCountSim"><strong>4</strong> students (17%)</div>
+              </div>
+              <div class="modality-dist-item">
+                <div class="modality-dist-badge real">Real-World Cases</div>
+                <div class="modality-dist-stat" id="modalityCountReal"><strong>3</strong> students (13%)</div>
+              </div>
+              <div class="modality-dist-item">
+                <div class="modality-dist-badge drill">Practice Drills</div>
+                <div class="modality-dist-stat" id="modalityCountDrill"><strong>3</strong> students (12%)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Prerequisite Deficit Hotspots -->
+          <div class="analytics-card">
+            <div class="analytics-card-title">
+              <span>Top Prerequisite Deficit Hotspots</span>
+              <small class="text-rose">Needs Group Review</small>
+            </div>
+            <div class="hotspots-list">
+              <div class="hotspot-item">
+                <div class="hotspot-header">
+                  <span class="hotspot-title">Cartesian Intercepts &amp; Zeroes</span>
+                  <span class="tag-badge rose">4 at risk</span>
+                </div>
+                <p class="hotspot-desc">Impacting comprehension in Polynomial Zeroes and Quadratic Equation graphing.</p>
+              </div>
+              <div class="hotspot-item">
+                <div class="hotspot-header">
+                  <span class="hotspot-title">Factoring Algebraic Trinomials</span>
+                  <span class="tag-badge amber">3 at risk</span>
+                </div>
+                <p class="hotspot-desc">Impacting Quadratic Equation Factorisation and Zero calculation.</p>
+              </div>
+              <div class="hotspot-item">
+                <div class="hotspot-header">
+                  <span class="hotspot-title">Ratio of Similar Triangles</span>
+                  <span class="tag-badge amber">2 at risk</span>
+                </div>
+                <p class="hotspot-desc">Impacting Trigonometric Ratios and Heights &amp; Distances applications.</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -503,6 +702,23 @@
             </svg>
             <h3>Class Cohort Roster &amp; Board Performance</h3>
           </div>
+          <span class="tag-badge cyan">Class 10-A &bull; 24 Candidates</span>
+        </div>
+
+        <!-- Roster Search & Filter Controls -->
+        <div class="roster-toolbar">
+          <div class="roster-search-box">
+            <svg class="svg-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="rosterSearchInput" placeholder="Filter candidates by name or student ID...">
+          </div>
+          <div class="roster-filter-pills">
+            <button class="filter-pill active" data-filter="all">All Candidates (<span id="filterCountAll">24</span>)</button>
+            <button class="filter-pill" data-filter="intervention">Needs Intervention (<span id="filterCountIntervention">4</span>)</button>
+            <button class="filter-pill" data-filter="developing">Developing (<span id="filterCountDeveloping">4</span>)</button>
+            <button class="filter-pill" data-filter="mastered">Mastered (<span id="filterCountMastered">16</span>)</button>
+          </div>
         </div>
 
         <div class="table-glass-card">
@@ -514,7 +730,7 @@
                 <th>Preferred Modality</th>
                 <th>Assessments</th>
                 <th>Diagnostic Status</th>
-                <th>Intervention Action</th>
+                <th>Student History &amp; Actions</th>
               </tr>
             </thead>
             <tbody id="teacherStudentsTable">
@@ -549,6 +765,69 @@
       </div>
 
       <div id="modalBody" class="modal-body-area">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 5. STUDENT DEEP-DIVE HISTORY & ANALYTICS MODAL                            -->
+  <!-- ========================================================================= -->
+  <div id="studentHistoryModal" class="modal-overlay hidden">
+    <div class="modal-window large-modal">
+      <div class="modal-top-bar">
+        <div class="modal-title-wrap">
+          <svg class="svg-icon text-indigo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          <h3 id="studentHistoryModalTitle">Candidate Learning History &amp; Model Profile</h3>
+        </div>
+        <button id="studentHistoryModalCloseBtn" class="modal-dismiss-btn" title="Close Modal">
+          <svg class="svg-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div id="studentHistoryModalBody" class="modal-body-area">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 6. CLASS DIAGNOSTIC REPORT MODAL                                          -->
+  <!-- ========================================================================= -->
+  <div id="classReportModal" class="modal-overlay hidden">
+    <div class="modal-window large-modal">
+      <div class="modal-top-bar">
+        <div class="modal-title-wrap">
+          <svg class="svg-icon text-emerald" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          <h3>PRISM Cohort Diagnostic Executive Report</h3>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <button class="btn-primary" onclick="window.print()" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+            Print / Save PDF
+          </button>
+          <button id="classReportModalCloseBtn" class="modal-dismiss-btn" title="Close Modal">
+            <svg class="svg-icon sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div id="classReportModalBody" class="modal-body-area">
         <!-- Populated dynamically -->
       </div>
     </div>

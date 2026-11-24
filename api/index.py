@@ -73,8 +73,8 @@ class handler(LearningDashboardHandler):
         if path in ("/api", "/api/", "/api/index", "/api/index.py", "/api/health"):
             self._send_json({
                 "status": "healthy",
-                "service": "IRONCLAD Personalized Learning API",
-                "version": "0.1.0",
+                "service": "PRISM (Personalized Recommendation and Intelligent Student Modelling) API",
+                "version": "1.0.0",
                 "environment": "vercel-serverless",
                 "active_domain": self.active_domain,
             })

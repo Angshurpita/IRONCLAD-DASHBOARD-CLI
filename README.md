@@ -1,6 +1,6 @@
-# PROJECT IRONCLAD 🛡️
+# PRISM (Personalized Recommendation and Intelligent Student Modelling) 🛡️
 
-**A minimal, ultra-reliable Retrieval-Augmented Generation (RAG) developer CLI.**
+**AI-Driven Personalized Learning Platform, Student Modelling Engine & Developer CLI.**
 
 [![Python Version](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
